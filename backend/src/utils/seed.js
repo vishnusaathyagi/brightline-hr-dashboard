@@ -3,22 +3,28 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 import { pool } from './db.js';
 
+// Get current file path for directory reading
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 export const seedDatabase = async () => {
   try {
+    // Path to the JSON log file from starter kit
     const dataPath = path.join(__dirname, '../../starter_kit/data/integration_logs.json');
+    
+    // Check if the log file actually exists before reading
     if (!fs.existsSync(dataPath)) {
       console.log('Integration logs JSON not found, skipping seed.');
       return;
     }
 
+    // Read and parse the JSON log records
     const rawData = fs.readFileSync(dataPath, 'utf-8');
     const logs = JSON.parse(rawData);
 
     console.log(`Seeding ${logs.length} logs into PostgreSQL database...`);
 
+    // Loop through each log and insert it into the database
     for (const log of logs) {
       const query = `
         INSERT INTO request_logs (integration_id, endpoint, status_code, response_time_ms, error_message, timestamp)
