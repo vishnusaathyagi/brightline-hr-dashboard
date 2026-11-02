@@ -1,3 +1,6 @@
+/**
+ * Reads integration logs from the starter kit JSON file and saves them into the PostgreSQL database.
+ */
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
