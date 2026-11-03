@@ -1,0 +1,36 @@
+# ================= 
+# Node.js & Backend
+# =================
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Environment Variables
+.env
+
+# ================= 
+# Angular / Frontend
+# =================
+dist/
+build/
+.angular/
+out-tsc/
+
+# ================= 
+# IDE & Editor Files
+# =================
+.vscode/
+.idea/
+
+# ================= 
+# OS Generated Files
+# =================
+.DS_Store
+Thumbs.db
+
+# ================= 
+# Data & Zip Archives
+# =================
+backend/data/*.zip
+backend/data/extracted_case_study/

@@ -3,17 +3,13 @@
  */
 import { GoogleGenAI } from '@google/genai';
 import { ENV } from '../config/env.config.js';
+import { AI_CONSTANTS } from '../config/constants.js';
 
 // Initialize Gemini SDK with API Key
 const ai = new GoogleGenAI({ apiKey: ENV.GEMINI_API_KEY });
 
 // Fallback model sequence to ensure high availability
-const MODEL_FALLBACK_CHAIN = [
-  'gemini-2.5-flash',
-  'gemini-2.5-flash-lite',
-  'gemini-1.5-flash',
-  'gemini-1.5-pro'
-];
+const MODEL_FALLBACK_CHAIN = AI_CONSTANTS.MODEL_FALLBACK_CHAIN;
 
 /**
  * Generates AI health summary and playbook using model fallback logic.
