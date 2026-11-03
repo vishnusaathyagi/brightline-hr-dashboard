@@ -1,5 +1,5 @@
 /**
- * Creates the request_logs table if not exists and seeds integration logs into PostgreSQL.
+ * Creates the request_logs table if not exists, clears existing data to prevent duplicates, and seeds integration logs into PostgreSQL.
  */
 import fs from 'fs';
 import path from 'path';
@@ -26,7 +26,11 @@ export const seedDatabase = async () => {
     await pool.query(createTableQuery);
     console.log('Table "request_logs" checked/created successfully.');
 
-    // 2. Locate the JSON file inside the data directory
+    // 2. Clear existing records to prevent duplicate data insertion on every restart
+    await pool.query('TRUNCATE TABLE request_logs RESTART IDENTITY CASCADE;');
+    console.log('Existing logs cleared to prevent duplicates.');
+
+    // 3. Locate the JSON file inside the data directory
     const dataDir = path.join(__dirname, '../../data');
 
     if (!fs.existsSync(dataDir)) {
@@ -57,7 +61,7 @@ export const seedDatabase = async () => {
 
     console.log(`JSON file found at: ${jsonFilePath}`);
 
-    // 3. Read and parse JSON data
+    // 4. Read and parse JSON data
     const rawData = fs.readFileSync(jsonFilePath, 'utf-8');
     const logsData = JSON.parse(rawData);
     
@@ -65,7 +69,7 @@ export const seedDatabase = async () => {
 
     console.log(`Inserting ${logRecords.length} records into PostgreSQL database...`);
 
-    // 4. Insert records into request_logs table
+    // 5. Insert records into request_logs table
     for (const log of logRecords) {
       const query = `
         INSERT INTO request_logs (integration_id, endpoint, status_code, response_time_ms, error_message, timestamp)

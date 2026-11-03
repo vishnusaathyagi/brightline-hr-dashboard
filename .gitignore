@@ -12,10 +12,11 @@ yarn-error.log*
 # ================= 
 # Angular / Frontend
 # =================
-dist/
-build/
-.angular/
-out-tsc/
+/frontend/dist/
+/frontend/build/
+/frontend/.angular/
+/frontend/tmp/
+/frontend/out-tsc/
 
 # ================= 
 # IDE & Editor Files
