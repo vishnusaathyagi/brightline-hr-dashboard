@@ -1,0 +1,113 @@
+:host {
+  display: block;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  background-color: #f4f7f6;
+  color: #2c3e50;
+  padding: 24px;
+}
+
+.dashboard-container {
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.dashboard-header h1 {
+  font-size: 2rem;
+  font-weight: 700;
+  color: #1a252f;
+}
+
+.subtitle {
+  font-size: 1rem;
+  color: #7f8c8d;
+  margin-bottom: 24px;
+}
+
+.status-card, .table-section, .ai-section {
+  background: #ffffff;
+  border-radius: 8px;
+  padding: 20px;
+  margin-bottom: 24px;
+  box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+}
+
+.status-badge {
+  display: inline-block;
+  padding: 8px 16px;
+  border-radius: 4px;
+  font-weight: bold;
+  margin-top: 8px;
+}
+
+.status-badge.healthy { background-color: #d4edda; color: #155724; }
+.status-badge.degraded { background-color: #fff3cd; color: #856404; }
+.status-badge.unhealthy { background-color: #f8d7da; color: #721c24; }
+
+.telemetry-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 12px;
+}
+
+.telemetry-table th, .telemetry-table td {
+  padding: 12px;
+  text-align: left;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.telemetry-table th {
+  background-color: #2c3e50;
+  color: #ffffff;
+}
+
+.ai-header-flex {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+}
+
+.ai-trigger-btn {
+  background-color: #2980b9;
+  color: #ffffff;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 4px;
+  font-size: 1rem;
+  cursor: pointer;
+  font-weight: 600;
+}
+
+.ai-trigger-btn:hover { background-color: #2471a3; }
+.ai-trigger-btn:disabled { background-color: #bdc3c7; cursor: not-allowed; }
+
+.ai-response-box {
+  background: #f8f9fa;
+  border-left: 4px solid #2980b9;
+  padding: 16px;
+  border-radius: 4px;
+  margin-top: 12px;
+}
+
+.model-meta {
+  font-size: 0.85rem;
+  color: #7f8c8d;
+  margin-bottom: 8px;
+}
+
+/* Accessibility Focus States */
+button:focus, a:focus, [tabindex="0"]:focus {
+  outline: 3px solid #f39c12;
+  outline-offset: 2px;
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  border: 0;
+}

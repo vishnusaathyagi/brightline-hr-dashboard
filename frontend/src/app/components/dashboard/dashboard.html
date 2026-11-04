@@ -1,0 +1,73 @@
+<main class="dashboard-container" role="main" aria-label="Brightline HR Integration Dashboard">
+  
+  <!-- Header Section -->
+  <header class="dashboard-header">
+    <h1 tabindex="0">Brightline HR - Enterprise Integration Dashboard</h1>
+    <p class="subtitle">Real-time SRE telemetry monitoring and AI-driven self-healing playbooks.</p>
+  </header>
+
+  <!-- Error Alert Banner -->
+  <div *ngIf="errorMessage" class="alert-banner error" role="alert" aria-live="assertive">
+    <span class="sr-only">Error:</span> {{ errorMessage }}
+  </div>
+
+  <!-- System Status Overview Card -->
+  <section class="status-card" aria-labelledby="status-heading">
+    <h2 id="status-heading">Overall System Health</h2>
+    <div class="status-badge" [ngClass]="systemStatus.toLowerCase()" role="status" aria-live="polite">
+      Status: <strong>{{ systemStatus }}</strong>
+    </div>
+  </section>
+
+  <!-- Integrations Telemetry Table -->
+  <section class="table-section" aria-labelledby="table-heading">
+    <h2 id="table-heading">Integration Endpoints Telemetry</h2>
+    
+    <table class="telemetry-table" aria-describedby="table-heading">
+      <thead>
+        <tr>
+          <th scope="col">Integration ID</th>
+          <th scope="col">Total Requests</th>
+          <th scope="col">Error Rate (%)</th>
+          <th scope="col">P95 Latency (ms)</th>
+          <th scope="col">Status</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let item of integrations">
+          <td>{{ item.integrationId }}</td>
+          <td>{{ item.totalRequests }}</td>
+          <td>{{ item.errorRate }}%</td>
+          <td>{{ item.p95LatencyMs }} ms</td>
+          <td>
+            <span class="badge" [ngClass]="item.status.toLowerCase()">
+              {{ item.status }}
+            </span>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </section>
+
+  <!-- AI SRE Insights Section -->
+  <section class="ai-section" aria-labelledby="ai-heading">
+    <div class="ai-header-flex">
+      <h2 id="ai-heading">Gemini AI SRE Executive Playbook</h2>
+      <button 
+        class="ai-trigger-btn" 
+        (click)="fetchAiInsights()" 
+        [disabled]="isLoadingAi"
+        aria-label="Generate AI Health Insights and Playbook">
+        <span *ngIf="!isLoadingAi">Generate AI Insights</span>
+        <span *ngIf="isLoadingAi" aria-live="assertive">Analyzing Telemetry...</span>
+      </button>
+    </div>
+
+    <!-- AI Response Display Box -->
+    <div *ngIf="aiInsights" class="ai-response-box" role="region" aria-live="polite" tabindex="0">
+      <div class="model-meta" aria-label="Model used for generation">Powered by Model: <strong>{{ aiModelUsed }}</strong></div>
+      <div class="insights-content" style="white-space: pre-line;">{{ aiInsights }}</div>
+    </div>
+  </section>
+
+</main>
