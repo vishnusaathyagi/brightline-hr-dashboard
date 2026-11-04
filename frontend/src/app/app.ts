@@ -3,7 +3,7 @@
  */
 import { Component } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { DashboardComponent } from '../app/components/dashboard/dashboard';
+import { DashboardComponent } from './components/dashboard/dashboard'; 
 
 @Component({
   selector: 'app-root',
