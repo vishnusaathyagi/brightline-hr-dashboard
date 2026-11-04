@@ -80,11 +80,20 @@
     </div>
 
     <!-- AI Response Display Box with HTML Formatting -->
-    <div *ngIf="aiInsights" class="ai-response-box" role="region" aria-live="polite" tabindex="0">
+    <div *ngIf="aiInsights; else emptyAiState" class="ai-response-box" role="region" aria-live="polite" tabindex="0">
       <div class="model-meta" aria-label="Model used for generation">Powered by Model: <strong>{{ aiModelUsed }}</strong></div>
       <!-- Using [innerHTML] to render bold tags, headers, and code snippets properly -->
       <div class="insights-content formatted-ai-text" [innerHTML]="aiInsights"></div>
     </div>
+
+    <!-- Professional Empty State (Shown before button is clicked) -->
+    <ng-template #emptyAiState>
+      <div class="ai-empty-state">
+        <div class="empty-icon">✨</div>
+        <p>No AI diagnostic playbook generated yet.</p>
+        <span class="empty-subtext">Click the <strong>"Generate AI Insights"</strong> button above to run an executive SRE analysis using Gemini AI.</span>
+      </div>
+    </ng-template>
   </section>
 
 </main>

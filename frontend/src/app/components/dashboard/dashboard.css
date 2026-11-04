@@ -201,3 +201,36 @@ button:focus, a:focus, [tabindex="0"]:focus {
   clip: rect(0, 0, 0, 0);
   border: 0;
 }
+
+/* AI Empty / Placeholder State Styles */
+.ai-empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 32px 20px;
+  background: #f8fafc;
+  border: 2px dashed #cbd5e1;
+  border-radius: 8px;
+  text-align: center;
+  margin-top: 12px;
+  color: #64748b;
+}
+
+.empty-icon {
+  font-size: 2rem;
+  margin-bottom: 8px;
+}
+
+.ai-empty-state p {
+  font-size: 1rem;
+  font-weight: 600;
+  color: #334155;
+  margin: 0 0 4px 0;
+}
+
+.empty-subtext {
+  font-size: 0.9rem;
+  color: #64748b;
+  max-width: 500px;
+}
