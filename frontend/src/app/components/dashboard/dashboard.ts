@@ -1,6 +1,3 @@
-/**
- * Standalone Dashboard Component - Acts as the primary controller for health metrics and AI insights.
- */
 import { Component, OnInit, inject, DestroyRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
@@ -14,11 +11,9 @@ import { HealthService, SystemHealthResponse, AiInsightsResponse } from '../../s
   styleUrls: ['./dashboard.css']
 })
 export class DashboardComponent implements OnInit {
-  // Functional dependency injection for Angular modern standard
   private healthService = inject(HealthService);
   private destroyRef = inject(DestroyRef);
 
-  // Component state variables
   systemStatus: string = 'LOADING';
   integrations: any[] = [];
   aiInsights: string = '';
@@ -30,17 +25,16 @@ export class DashboardComponent implements OnInit {
     this.loadSystemHealth();
   }
 
-  /**
-   * Loads system health metrics and uses DestroyRef lifecycle to prevent memory leaks.
-   */
   loadSystemHealth(): void {
     this.healthService.getSystemHealth()
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
-        next: (response: SystemHealthResponse) => {
-          if (response.success) {
-            this.systemStatus = response.data.systemStatus;
-            this.integrations = response.data.integrations;
+        next: (response: any) => {
+          // Handle both direct data or wrapped response structures safely
+          const resData = response.data || response;
+          if (response.success !== false) {
+            this.systemStatus = resData.systemStatus || 'UNKNOWN';
+            this.integrations = resData.integrations || [];
             this.errorMessage = '';
           }
         },
@@ -51,9 +45,6 @@ export class DashboardComponent implements OnInit {
       });
   }
 
-  /**
-   * Fetches Gemini AI SRE insights and playbook.
-   */
   fetchAiInsights(): void {
     this.isLoadingAi = true;
     this.aiInsights = '';
@@ -61,10 +52,11 @@ export class DashboardComponent implements OnInit {
     this.healthService.getAiInsights()
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
-        next: (response: AiInsightsResponse) => {
-          if (response.success) {
-            this.aiInsights = response.data.insights;
-            this.aiModelUsed = response.data.modelUsed;
+        next: (response: any) => {
+          const resData = response.data || response;
+          if (response.success !== false) {
+            this.aiInsights = resData.insights || 'No insights returned.';
+            this.aiModelUsed = resData.modelUsed || 'Gemini AI';
             this.isLoadingAi = false;
           }
         },
