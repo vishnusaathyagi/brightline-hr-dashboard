@@ -1,85 +1,66 @@
-/**
- * Core health aggregation engine with hysteresis noise reduction for integration metrics.
- */
-import { HEALTH_CONSTANTS } from '../config/constants.js';
-import { getRollingWindowMetrics } from '../repositories/health.repository.js';
-
-// In-Memory Hysteresis Cache to prevent status flapping
-const stateHistoryCache = new Map();
+import pool from '../config/db.js';
 
 /**
- * Calculates system health with hysteresis noise reduction.
+ * Calculates real-time system health and integration metrics from PostgreSQL request_logs.
  */
 export const calculateSystemHealth = async () => {
-    const rawMetrics = await getRollingWindowMetrics();
-    let overallSystemStatus = HEALTH_CONSTANTS.STATUS.HEALTHY;
+  try {
+    // 1. Fetch active integrations from database
+    const integrationsQuery = `SELECT integration_id, name, endpoint_url, is_active FROM integrations WHERE is_active = true;`;
+    const integrationsResult = await pool.query(integrationsQuery);
+    const integrationsList = integrationsResult.rows;
 
-    const processedIntegrations = rawMetrics.map(metric => {
-        const total = parseInt(metric.total_requests, 10) || 1;
-        const errors = parseInt(metric.error_count, 10) || 0;
-        const p95Latency = parseFloat(metric.p95_latency) || 0;
-        const errorRate = (errors / total) * 100;
+    let overallSystemHealthy = true;
+    const processedIntegrations = [];
 
-        let calculatedStatus = HEALTH_CONSTANTS.STATUS.HEALTHY;
-        // ---- Evaluate status based on error rate and latency thresholds ----
+    for (const integration of integrationsList) {
+      // 2. Fetch live metrics from request_logs for each integration
+      const metricsQuery = `
+        SELECT 
+          COUNT(*) AS total_requests,
+          COALESCE(AVG(response_time_ms), 0) AS avg_latency,
+          COALESCE(SUM(CASE WHEN status_code >= 400 THEN 1 ELSE 0 END), 0) AS error_count
+        FROM request_logs 
+        WHERE integration_id = $1 
+          AND timestamp >= NOW() - INTERVAL '24 hours';
+      `;
+      const metricsResult = await pool.query(metricsQuery, [integration.integration_id]);
+      const metrics = metricsResult.rows[0];
 
-        // Check if error rate is too high to mark as unhealthy
-        if (errorRate >= HEALTH_CONSTANTS.THRESHOLDS.UNHEALTHY_ERROR_RATE) {
-            calculatedStatus = HEALTH_CONSTANTS.STATUS.UNHEALTHY;
-        }
-        // Check if error rate or latency crosses degraded thresholds
-        else if (
-            errorRate >= HEALTH_CONSTANTS.THRESHOLDS.DEGRADED_ERROR_RATE ||
-            p95Latency > HEALTH_CONSTANTS.THRESHOLDS.P95_DEGRADED_LATENCY_MS
-        ) {
-            calculatedStatus = HEALTH_CONSTANTS.STATUS.DEGRADED;
-        }
+      const totalRequests = parseInt(metrics.total_requests, 10);
+      const errorCount = parseInt(metrics.error_count, 10);
+      const errorRate = totalRequests > 0 ? parseFloat(((errorCount / totalRequests) * 100).toFixed(2)) : 0.0;
+      const avgLatency = Math.round(parseFloat(metrics.avg_latency));
 
-        // Apply Hysteresis Filter (Require 2 consecutive failed ticks to flag UNHEALTHY)
-        const prevHistory = stateHistoryCache.get(metric.integration_id) || { consecutiveFailures: 0 };
-        let finalStatus = calculatedStatus;
+      // Determine status based on real error rate and thresholds
+      let status = 'HEALTHY';
+      if (errorRate > 5.0 || avgLatency > 500) {
+        status = 'DEGRADED';
+        overallSystemHealthy = false;
+      }
+      if (errorRate > 20.0) {
+        status = 'UNHEALTHY';
+        overallSystemHealthy = false;
+      }
 
-        // Check if status is unhealthy to apply hysteresis check
-        if (calculatedStatus === HEALTH_CONSTANTS.STATUS.UNHEALTHY) {
-            const newConsecutive = prevHistory.consecutiveFailures + 1;
+      processedIntegrations.push({
+        integrationId: integration.integration_id,
+        name: integration.name,
+        totalRequests,
+        errorRate,
+        p95LatencyMs: avgLatency,
+        status
+      });
+    }
 
-            // Keep status degraded if failure count is less than 2 consecutive ticks
-            if (newConsecutive < 2) {
-                finalStatus = HEALTH_CONSTANTS.STATUS.DEGRADED;
-            }
-            stateHistoryCache.set(metric.integration_id, { consecutiveFailures: newConsecutive });
-        }
-        // Reset failure count to zero if status is healthy or stable
-        else {
-            stateHistoryCache.set(metric.integration_id, { consecutiveFailures: 0 });
-        }
-
-        // ---- Worst-Case Overall Aggregation ----
-
-        // Mark overall system unhealthy if any integration is unhealthy
-        if (finalStatus === HEALTH_CONSTANTS.STATUS.UNHEALTHY) {
-            overallSystemStatus = HEALTH_CONSTANTS.STATUS.UNHEALTHY;
-        }
-
-        // Mark overall system degraded if integration is degraded and not already unhealthy
-        else if (finalStatus === HEALTH_CONSTANTS.STATUS.DEGRADED && overallSystemStatus !== HEALTH_CONSTANTS.STATUS.UNHEALTHY) {
-            overallSystemStatus = HEALTH_CONSTANTS.STATUS.DEGRADED;
-        }
-
-        // Return structured metric result for the current integration
-        return {
-            integrationId: metric.integration_id,
-            totalRequests: total,
-            errorRate: parseFloat(errorRate.toFixed(2)),
-            p95LatencyMs: Math.round(p95Latency),
-            status: finalStatus
-        };
-    });
-
-    // Return final aggregated system health payload with timestamp
     return {
-        systemStatus: overallSystemStatus,
-        timestamp: new Date().toISOString(),
-        integrations: processedIntegrations
+      systemStatus: overallSystemHealthy ? 'HEALTHY' : 'DEGRADED',
+      timestamp: new Date().toISOString(),
+      integrations: processedIntegrations
     };
+
+  } catch (error) {
+    console.error('Error calculating live system health from DB:', error.message);
+    throw error; // Let controller handle or bubble up
+  }
 };

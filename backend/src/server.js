@@ -5,6 +5,7 @@ import express from 'express';
 import cors from 'cors';
 import { ENV } from './config/env.config.js';
 import healthRoutes from './routes/health.routes.js';
+import { requestLogger } from './middlewares/requestLogger.middleware.js';
 import { seedDatabase } from './utils/seed.js';
 
 const app = express();
@@ -12,6 +13,9 @@ const app = express();
 // Middleware setup
 app.use(cors());
 app.use(express.json());
+
+// Register global request telemetry logger middleware
+app.use(requestLogger('HR-TELEMETRY-SVC'));
 
 // API Routes prefix
 app.use('/api', healthRoutes);
