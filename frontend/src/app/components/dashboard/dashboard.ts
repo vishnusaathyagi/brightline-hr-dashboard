@@ -90,10 +90,15 @@ export class DashboardComponent implements OnInit {
   private formatMarkdown(text: string): string {
     if (!text) return '';
     return text
+      .replace(/---/gim, '') // Remove markdown horizontal lines that create huge gaps
       .replace(/^### (.*$)/gim, '<h3 class="ai-heading">$1</h3>')
       .replace(/^## (.*$)/gim, '<h2 class="ai-heading">$1</h2>')
       .replace(/\*\*(.*?)\*\*/gim, '<strong>$1</strong>')
       .replace(/\*(.*?)\*/gim, '<em>$1</em>')
+      // Colorize severity statuses automatically
+      .replace(/\[(STABLE|HEALTHY)\]/gim, '<span class="status-pill green">$1</span>')
+      .replace(/\[(HIGH|CRITICAL|UNHEALTHY)\]/gim, '<span class="status-pill red">$1</span>')
+      .replace(/\[(MEDIUM|DEGRADED|MODERATE)\]/gim, '<span class="status-pill orange">$1</span>')
       .replace(/`([^`]+)`/gim, '<code class="ai-code">$1</code>')
       .replace(/\n/gim, '<br />');
   }

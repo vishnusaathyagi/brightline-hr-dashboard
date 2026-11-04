@@ -84,44 +84,79 @@
 .ai-trigger-btn:hover { background-color: #2471a3; }
 .ai-trigger-btn:disabled { background-color: #bdc3c7; cursor: not-allowed; }
 
+/* AI Response Container Box Enhancement (Clean white background & professional blue accent) */
 .ai-response-box {
-  background: #f8f9fa;
-  border-left: 4px solid #2980b9;
-  padding: 16px;
-  border-radius: 4px;
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-left: 4px solid #3b82f6;
+  padding: 20px 24px;
+  border-radius: 8px;
   margin-top: 12px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.02);
 }
 
 .model-meta {
   font-size: 0.85rem;
-  color: #7f8c8d;
-  margin-bottom: 8px;
+  color: #64748b;
+  margin-bottom: 12px;
+  border-bottom: 1px solid #f1f5f9;
+  padding-bottom: 8px;
 }
 
-/* Formatted AI Insights HTML elements */
-.formatted-ai-text ::deep .ai-heading, 
+/* Typography, Line-Height & Spacing Fixes for AI Content */
+.formatted-ai-text {
+  font-size: 0.95rem;
+  line-height: 1.6;
+  color: #334155;
+}
+
+.formatted-ai-text .ai-heading, 
 .formatted-ai-text h3 {
-  font-size: 1.1rem;
+  font-size: 1.05rem;
   font-weight: 700;
-  color: #2c3e50;
+  color: #1e293b;
   margin-top: 16px;
-  margin-bottom: 6px;
-  border-bottom: 1px solid #e2e8f0;
+  margin-bottom: 8px; /* Tighter gap between heading and body text */
   padding-bottom: 4px;
 }
 
 .formatted-ai-text strong {
-  color: #1a252f;
+  color: #0f172a;
   font-weight: 600;
 }
 
-.formatted-ai-text .ai-code {
-  background: #edf2f7;
+/* Severity Status Colored Pills */
+.status-pill {
+  display: inline-block;
+  padding: 2px 8px;
+  font-size: 0.85rem;
+  font-weight: 700;
+  border-radius: 4px;
+  letter-spacing: 0.5px;
+}
+
+.status-pill.green {
+  background-color: #dcfce7;
+  color: #166534;
+}
+
+.status-pill.red {
+  background-color: #fee2e2;
+  color: #991b1b;
+}
+
+.status-pill.orange {
+  background-color: #fef3c7;
+  color: #92400e;
+}
+
+.ai-code {
+  background: #f1f5f9;
   padding: 2px 6px;
   border-radius: 4px;
   font-family: monospace;
   font-size: 0.9em;
-  color: #c0392b;
+  color: #e11d48;
 }
 
 /* Wave Loader Styles */
