@@ -1,6 +1,3 @@
-/**
- * Creates the request_logs table if not exists, clears existing data to prevent duplicates, and seeds integration logs into PostgreSQL.
- */
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
@@ -11,8 +8,20 @@ const __dirname = path.dirname(__filename);
 
 export const seedDatabase = async () => {
   try {
-    // 1. Automatically create the table if it does not exist
-    const createTableQuery = `
+    // 1. Automatically create tables if they do not exist
+    const createIntegrationsTableQuery = `
+      CREATE TABLE IF NOT EXISTS integrations (
+        id SERIAL PRIMARY KEY,
+        integration_id VARCHAR(255) UNIQUE NOT NULL,
+        name VARCHAR(255) NOT NULL,
+        endpoint_url VARCHAR(255),
+        is_active BOOLEAN DEFAULT TRUE,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      );
+    `;
+    await pool.query(createIntegrationsTableQuery);
+
+    const createLogsTableQuery = `
       CREATE TABLE IF NOT EXISTS request_logs (
         id SERIAL PRIMARY KEY,
         integration_id VARCHAR(255),
@@ -23,16 +32,26 @@ export const seedDatabase = async () => {
         timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       );
     `;
-    await pool.query(createTableQuery);
-    console.log('Table "request_logs" checked/created successfully.');
+    await pool.query(createLogsTableQuery);
+    console.log('Database tables checked/created successfully.');
 
-    // 2. Clear existing records to prevent duplicate data insertion on every restart
+    // 2. Seed default integrations if empty
+    const checkIntegrations = await pool.query('SELECT COUNT(*) FROM integrations;');
+    if (parseInt(checkIntegrations.rows[0].count, 10) === 0) {
+      await pool.query(`
+        INSERT INTO integrations (integration_id, name, endpoint_url, is_active) 
+        VALUES 
+          ('HR-Telemetry-SVC', 'HR Core Telemetry Service', '/api/health', true),
+          ('HR-DB-01', 'HR Database Integration', '/api/hr', true);
+      `);
+      console.log('Default integrations seeded successfully.');
+    }
+
+    // 3. Clear existing request logs and seed from JSON
     await pool.query('TRUNCATE TABLE request_logs RESTART IDENTITY CASCADE;');
-    console.log('Existing logs cleared to prevent duplicates.');
+    console.log('Existing request logs cleared.');
 
-    // 3. Locate the JSON file inside the data directory
     const dataDir = path.join(__dirname, '../../data');
-
     if (!fs.existsSync(dataDir)) {
       console.log(`Data directory not found at: ${dataDir}`);
       return;
@@ -53,30 +72,24 @@ export const seedDatabase = async () => {
     };
 
     const jsonFilePath = findJsonFile(dataDir);
-
     if (!jsonFilePath) {
-      console.log('No JSON file found in data folder or its sub-folders.');
+      console.log('No JSON file found in data folder.');
       return;
     }
 
-    console.log(`JSON file found at: ${jsonFilePath}`);
-
-    // 4. Read and parse JSON data
     const rawData = fs.readFileSync(jsonFilePath, 'utf-8');
     const logsData = JSON.parse(rawData);
-    
     const logRecords = Array.isArray(logsData) ? logsData : (logsData.logs || logsData.data || []);
 
-    console.log(`Inserting ${logRecords.length} records into PostgreSQL database...`);
+    console.log(`Inserting ${logRecords.length} records into request_logs table...`);
 
-    // 5. Insert records into request_logs table
     for (const log of logRecords) {
       const query = `
         INSERT INTO request_logs (integration_id, endpoint, status_code, response_time_ms, error_message, timestamp)
         VALUES ($1, $2, $3, $4, $5, $6)
       `;
       await pool.query(query, [
-        log.integration_id || log.id || 'N/A',
+        log.integration_id || log.id || 'HR-Telemetry-SVC',
         log.endpoint || log.path || '/',
         log.status_code || 200,
         log.response_time_ms || log.latency || 0,

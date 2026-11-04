@@ -11,43 +11,56 @@
     <span class="sr-only">Error:</span> {{ errorMessage }}
   </div>
 
-  <!-- System Status Overview Card -->
-  <section class="status-card" aria-labelledby="status-heading">
-    <h2 id="status-heading">Overall System Health</h2>
-    <div class="status-badge" [ngClass]="systemStatus.toLowerCase()" role="status" aria-live="polite">
-      Status: <strong>{{ systemStatus }}</strong>
+  <!-- Page Loading Wave Spinner (Shown during initial load) -->
+  <div *ngIf="isLoadingHealth" class="loader-container" aria-label="Loading dashboard metrics">
+    <div class="wave-spinner">
+      <span></span><span></span><span></span><span></span><span></span>
     </div>
-  </section>
+    <p>Loading real-time system health...</p>
+  </div>
 
-  <!-- Integrations Telemetry Table -->
-  <section class="table-section" aria-labelledby="table-heading">
-    <h2 id="table-heading">Integration Endpoints Telemetry</h2>
+  <!-- Main Content (Hidden until initial load completes) -->
+  <ng-container *ngIf="!isLoadingHealth">
     
-    <table class="telemetry-table" aria-describedby="table-heading">
-      <thead>
-        <tr>
-          <th scope="col">Integration ID</th>
-          <th scope="col">Total Requests</th>
-          <th scope="col">Error Rate (%)</th>
-          <th scope="col">P95 Latency (ms)</th>
-          <th scope="col">Status</th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr *ngFor="let item of integrations">
-          <td>{{ item.integrationId }}</td>
-          <td>{{ item.totalRequests }}</td>
-          <td>{{ item.errorRate }}%</td>
-          <td>{{ item.p95LatencyMs }} ms</td>
-          <td>
-            <span class="badge" [ngClass]="item.status.toLowerCase()">
-              {{ item.status }}
-            </span>
-          </td>
-        </tr>
-      </tbody>
-    </table>
-  </section>
+    <!-- System Status Overview Card -->
+    <section class="status-card" aria-labelledby="status-heading">
+      <h2 id="status-heading">Overall System Health</h2>
+      <div class="status-badge" [ngClass]="systemStatus.toLowerCase()" role="status" aria-live="polite">
+        Status: <strong>{{ systemStatus }}</strong>
+      </div>
+    </section>
+
+    <!-- Integrations Telemetry Table -->
+    <section class="table-section" aria-labelledby="table-heading">
+      <h2 id="table-heading">Integration Endpoints Telemetry</h2>
+      
+      <table class="telemetry-table" aria-describedby="table-heading">
+        <thead>
+          <tr>
+            <th scope="col">Integration ID</th>
+            <th scope="col">Total Requests</th>
+            <th scope="col">Error Rate (%)</th>
+            <th scope="col">P95 Latency (ms)</th>
+            <th scope="col">Status</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let item of integrations">
+            <td>{{ item.integrationId }}</td>
+            <td>{{ item.totalRequests }}</td>
+            <td>{{ item.errorRate }}%</td>
+            <td>{{ item.p95LatencyMs }} ms</td>
+            <td>
+              <span class="badge" [ngClass]="item.status.toLowerCase()">
+                {{ item.status }}
+              </span>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </section>
+
+  </ng-container>
 
   <!-- AI SRE Insights Section -->
   <section class="ai-section" aria-labelledby="ai-heading">
@@ -59,14 +72,18 @@
         [disabled]="isLoadingAi"
         aria-label="Generate AI Health Insights and Playbook">
         <span *ngIf="!isLoadingAi">Generate AI Insights</span>
-        <span *ngIf="isLoadingAi" aria-live="assertive">Analyzing Telemetry...</span>
+        <span *ngIf="isLoadingAi" class="btn-spinner-flex">
+          <span class="mini-wave"><span></span><span></span><span></span></span>
+          Analyzing Telemetry...
+        </span>
       </button>
     </div>
 
-    <!-- AI Response Display Box -->
+    <!-- AI Response Display Box with HTML Formatting -->
     <div *ngIf="aiInsights" class="ai-response-box" role="region" aria-live="polite" tabindex="0">
       <div class="model-meta" aria-label="Model used for generation">Powered by Model: <strong>{{ aiModelUsed }}</strong></div>
-      <div class="insights-content" style="white-space: pre-line;">{{ aiInsights }}</div>
+      <!-- Using [innerHTML] to render bold tags, headers, and code snippets properly -->
+      <div class="insights-content formatted-ai-text" [innerHTML]="aiInsights"></div>
     </div>
   </section>
 
