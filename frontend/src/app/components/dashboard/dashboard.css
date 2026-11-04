@@ -84,7 +84,7 @@
 .ai-trigger-btn:hover { background-color: #2471a3; }
 .ai-trigger-btn:disabled { background-color: #bdc3c7; cursor: not-allowed; }
 
-/* AI Response Container Box Enhancement (Clean white background & professional blue accent) */
+/* AI Response Container Box Enhancement */
 .ai-response-box {
   background: #ffffff;
   border: 1px solid #e2e8f0;
@@ -93,6 +93,13 @@
   border-radius: 8px;
   margin-top: 12px;
   box-shadow: 0 2px 4px rgba(0,0,0,0.02);
+  outline: none;
+}
+
+.ai-response-box:focus {
+  outline: none;
+  border-color: #e2e8f0;
+  border-left-color: #3b82f6;
 }
 
 .model-meta {
@@ -103,7 +110,7 @@
   padding-bottom: 8px;
 }
 
-/* Typography, Line-Height & Spacing Fixes for AI Content */
+/* Typography & Line-Height Fixes for AI Content */
 .formatted-ai-text {
   font-size: 0.95rem;
   line-height: 1.6;
@@ -116,7 +123,7 @@
   font-weight: 700;
   color: #1e293b;
   margin-top: 16px;
-  margin-bottom: 8px; /* Tighter gap between heading and body text */
+  margin-bottom: 8px;
   padding-bottom: 4px;
 }
 
@@ -125,29 +132,29 @@
   font-weight: 600;
 }
 
-/* Severity Status Colored Pills */
-.status-pill {
-  display: inline-block;
-  padding: 2px 8px;
-  font-size: 0.85rem;
-  font-weight: 700;
-  border-radius: 4px;
-  letter-spacing: 0.5px;
+/* Severity Status Colored Pills with ::ng-deep */
+::ng-deep .status-pill {
+  display: inline-block !important;
+  padding: 2px 8px !important;
+  font-size: 0.85rem !important;
+  font-weight: 700 !important;
+  border-radius: 4px !important;
+  letter-spacing: 0.5px !important;
 }
 
-.status-pill.green {
-  background-color: #dcfce7;
-  color: #166534;
+::ng-deep .status-pill.green {
+  background-color: #dcfce7 !important;
+  color: #166534 !important;
 }
 
-.status-pill.red {
-  background-color: #fee2e2;
-  color: #991b1b;
+::ng-deep .status-pill.red {
+  background-color: #fee2e2 !important;
+  color: #991b1b !important;
 }
 
-.status-pill.orange {
-  background-color: #fef3c7;
-  color: #92400e;
+::ng-deep .status-pill.orange {
+  background-color: #fef3c7 !important;
+  color: #92400e !important;
 }
 
 .ai-code {
@@ -267,5 +274,73 @@ button:focus, a:focus, [tabindex="0"]:focus {
 .empty-subtext {
   font-size: 0.9rem;
   color: #64748b;
+  max-width: 500px;
+}
+
+/* Optimized Professional Error Widget Layout */
+.status-error-widget {
+  margin-top: 12px;
+  padding: 16px 20px;
+  background-color: #fef2f2;
+  border: 1px solid #fecaca;
+  border-left: 5px solid #dc2626;
+  border-radius: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.error-badge-flex {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.error-title {
+  font-weight: 700;
+  color: #991b1b;
+  font-size: 1rem;
+}
+
+.error-desc {
+  margin: 0;
+  color: #7f1d1d;
+  font-size: 0.92rem;
+  line-height: 1.5;
+}
+
+/* AI Section Error Box Styles */
+.ai-error-box {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 32px 20px;
+  background: #fff5f5;
+  border: 2px dashed #fca5a5;
+  border-radius: 8px;
+  text-align: center;
+  margin-top: 12px;
+  color: #991b1b;
+}
+
+.ai-error-icon {
+  font-size: 2rem;
+  margin-bottom: 8px;
+}
+
+.ai-error-title {
+  font-size: 1rem;
+  font-weight: 700;
+  color: #991b1b;
+  margin: 0 0 4px 0;
+}
+
+.ai-error-subtext {
+  font-size: 0.9rem;
+  color: #7f1d1d;
   max-width: 500px;
 }

@@ -73,12 +73,13 @@ export class DashboardComponent implements OnInit {
         next: (response: any) => {
           const resData = response?.data || response;
           const rawInsights = resData?.insights || 'No insights returned.';
-          this.aiInsights = this.formatMarkdown(rawInsights); // Convert raw markdown to clean HTML tags
+          this.aiInsights = this.formatMarkdown(rawInsights);
           this.aiModelUsed = resData?.modelUsed || 'Gemini AI';
           this.cdRef.detectChanges();
         },
         error: (err) => {
-          this.errorMessage = 'Failed to generate Gemini AI insights. Fallback models encountered an error.';
+          // Enhanced error message for real-time server connection failure
+          this.errorMessage = 'Server is offline or unreachable. Unable to generate Gemini AI insights at the moment.';
           this.cdRef.detectChanges();
         }
       });
@@ -90,15 +91,15 @@ export class DashboardComponent implements OnInit {
   private formatMarkdown(text: string): string {
     if (!text) return '';
     return text
-      .replace(/---/gim, '') // Remove markdown horizontal lines that create huge gaps
+      .replace(/---/gim, '')
       .replace(/^### (.*$)/gim, '<h3 class="ai-heading">$1</h3>')
       .replace(/^## (.*$)/gim, '<h2 class="ai-heading">$1</h2>')
+      // Makes "Severity Status:" bold and applies status-pill properly without brackets
+      .replace(/(\*\*)?(Severity Status:)(\*\*)?\s*\[?(STABLE|HEALTHY)\]?/gim, '<strong>Severity Status:</strong> <span class="status-pill green">STABLE</span>')
+      .replace(/(\*\*)?(Severity Status:)(\*\*)?\s*\[?(HIGH|CRITICAL|UNHEALTHY)\]?/gim, '<strong>Severity Status:</strong> <span class="status-pill red">HIGH</span>')
+      .replace(/(\*\*)?(Severity Status:)(\*\*)?\s*\[?(MEDIUM|DEGRADED|MODERATE)\]?/gim, '<strong>Severity Status:</strong> <span class="status-pill orange">MEDIUM</span>')
       .replace(/\*\*(.*?)\*\*/gim, '<strong>$1</strong>')
       .replace(/\*(.*?)\*/gim, '<em>$1</em>')
-      // Colorize severity statuses automatically
-      .replace(/\[(STABLE|HEALTHY)\]/gim, '<span class="status-pill green">$1</span>')
-      .replace(/\[(HIGH|CRITICAL|UNHEALTHY)\]/gim, '<span class="status-pill red">$1</span>')
-      .replace(/\[(MEDIUM|DEGRADED|MODERATE)\]/gim, '<span class="status-pill orange">$1</span>')
       .replace(/`([^`]+)`/gim, '<code class="ai-code">$1</code>')
       .replace(/\n/gim, '<br />');
   }

@@ -6,12 +6,7 @@
     <p class="subtitle">Real-time SRE telemetry monitoring and AI-driven self-healing playbooks.</p>
   </header>
 
-  <!-- Error Alert Banner -->
-  <div *ngIf="errorMessage" class="alert-banner error" role="alert" aria-live="assertive">
-    <span class="sr-only">Error:</span> {{ errorMessage }}
-  </div>
-
-  <!-- Page Loading Wave Spinner (Shown during initial load) -->
+  <!-- Page Loading Wave Spinner -->
   <div *ngIf="isLoadingHealth" class="loader-container" aria-label="Loading dashboard metrics">
     <div class="wave-spinner">
       <span></span><span></span><span></span><span></span><span></span>
@@ -19,15 +14,28 @@
     <p>Loading real-time system health...</p>
   </div>
 
-  <!-- Main Content (Hidden until initial load completes) -->
+  <!-- Main Content -->
   <ng-container *ngIf="!isLoadingHealth">
     
     <!-- System Status Overview Card -->
     <section class="status-card" aria-labelledby="status-heading">
       <h2 id="status-heading">Overall System Health</h2>
-      <div class="status-badge" [ngClass]="systemStatus.toLowerCase()" role="status" aria-live="polite">
+      
+      <!-- Normal Healthy/Degraded Status -->
+      <div *ngIf="!errorMessage; else errorStatusTemplate" class="status-badge" [ngClass]="systemStatus.toLowerCase()" role="status" aria-live="polite">
         Status: <strong>{{ systemStatus }}</strong>
       </div>
+
+      <!-- Professional Compact Error Widget with Screen Reader Support -->
+      <ng-template #errorStatusTemplate>
+        <div class="status-error-widget" role="alert" aria-live="assertive">
+          <div class="error-badge-flex">
+            <span class="status-pill red">ERROR</span>
+            <span class="error-title">Backend Connection Failed</span>
+          </div>
+          <p class="error-desc">{{ errorMessage }}</p>
+        </div>
+      </ng-template>
     </section>
 
     <!-- Integrations Telemetry Table -->
@@ -79,20 +87,29 @@
       </button>
     </div>
 
-    <!-- AI Response Display Box with HTML Formatting -->
-    <div *ngIf="aiInsights; else emptyAiState" class="ai-response-box" role="region" aria-live="polite" tabindex="0">
+    <!-- Case 1: AI Insights Loaded Successfully -->
+    <div *ngIf="aiInsights; else aiStateChecker" class="ai-response-box" role="region" aria-live="polite" tabindex="0">
       <div class="model-meta" aria-label="Model used for generation">Powered by Model: <strong>{{ aiModelUsed }}</strong></div>
-      <!-- Using [innerHTML] to render bold tags, headers, and code snippets properly -->
       <div class="insights-content formatted-ai-text" [innerHTML]="aiInsights"></div>
     </div>
 
-    <!-- Professional Empty State (Shown before button is clicked) -->
-    <ng-template #emptyAiState>
-      <div class="ai-empty-state">
-        <div class="empty-icon">✨</div>
-        <p>No AI diagnostic playbook generated yet.</p>
-        <span class="empty-subtext">Click the <strong>"Generate AI Insights"</strong> button above to run an executive SRE analysis using Gemini AI.</span>
+    <!-- Case 2: Error state or Empty state checker -->
+    <ng-template #aiStateChecker>
+      <!-- If backend is offline / AI error occurred -->
+      <div *ngIf="errorMessage; else emptyAiState" class="ai-error-box" role="alert" aria-live="assertive">
+        <div class="ai-error-icon">⚠️</div>
+        <p class="ai-error-title">AI Generation Unavailable</p>
+        <span class="ai-error-subtext">{{ errorMessage }}</span>
       </div>
+
+      <!-- Normal Empty State -->
+      <ng-template #emptyAiState>
+        <div class="ai-empty-state">
+          <div class="empty-icon">✨</div>
+          <p>No AI diagnostic playbook generated yet.</p>
+          <span class="empty-subtext">Click the <strong>"Generate AI Insights"</strong> button above to run an executive SRE analysis using Gemini AI.</span>
+        </div>
+      </ng-template>
     </ng-template>
   </section>
 
