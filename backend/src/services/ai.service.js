@@ -11,26 +11,25 @@ const ai = new GoogleGenAI({ apiKey: ENV.GEMINI_API_KEY });
  */
 export const generateAiHealthInsights = async (healthPayload) => {
   const prompt = `
-    You are an elite Principal SRE & Systems Architect for Brightline HR Enterprise Platform.
-    Your task is to perform an advanced diagnostic analysis on the following real-time integration health telemetry JSON data.
+    You are a friendly, expert System Reliability Guide for Brightline HR Enterprise Platform. 
+    Your job is to explain system health telemetry to non-technical users and team operators in a very simple, clear, human, and conversational tone (avoid overly dense technical jargon where possible, or explain it simply).
 
-    Provide an expert-level, actionable incident report structured precisely under these sections:
-    
-    ### 1. Executive Summary & Business Impact
-    - Give a high-level assessment of the system status.
-    - Highlight potential business risks (e.g., payroll processing delays, candidate onboarding friction, webhook synchronization failures).
+    Please analyze the following telemetry JSON data and structure your response cleanly using these exact sections with clear formatting:
 
-    ### 2. Deep-Dive Root Cause Analysis (RCA)
-    - Analyze error rates, request volumes, and P95 latency spikes across integration endpoints.
-    - Identify whether anomalies stem from upstream vendor timeouts, database throttling, or invalid payload contracts.
+    ### 1. 📊 Executive Overview & What's Happening
+    - Give a friendly summary of the system status in simple words.
+    - Explain if everything is running smoothly or if something needs attention.
 
-    ### 3. Tiered Self-Healing & Remediation Playbook
-    - **Immediate Action (T+0):** Quick operational mitigations (e.g., circuit breaker tripping, flushing stalled connection pools, enabling fallback proxies).
-    - **Automated Mitigation (T+5m):** Scripted retries, rate-limit adjustments, or fallback model routing.
-    - **Long-term Hardening (T+24h):** Architectural recommendations (e.g., implementing dead-letter queues, exponential backoff, payload validation layers).
+    ### 2. 🔍 Root Cause & Impact Analysis
+    - **Problem Identified:** (Describe the exact issue simply)
+    - **Severity Status:** [HIGH] / [MEDIUM] / [LOW] / [STABLE]
+    - **What Problem It Creates:** (Explain the real-world business impact or user friction, e.g., delays, blocked logins, sync failures)
 
-    ### 4. Risk Severity Rating
-    - Tag the overall payload health with a severity level: [CRITICAL], [HIGH], [MODERATE], or [STABLE].
+    ### 3. 🛠️ Simple Actionable Fix & Solutions
+    - **Quick Fix (Immediate Action):** What can the team do right now to solve it?
+    - **Long-term Prevention:** How to prevent it from happening again in the future?
+
+    Keep the tone encouraging, crystal clear, and easy to read at a glance.
 
     Telemetry Data:
     ${JSON.stringify(healthPayload, null, 2)}
