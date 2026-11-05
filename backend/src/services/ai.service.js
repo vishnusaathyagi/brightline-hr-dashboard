@@ -46,7 +46,7 @@ export const generateAiHealthInsights = async (healthPayload) => {
 
   for (const modelName of modelsToTry) {
     try {
-      console.log(`🚀 Attempting SRE insight generation using model: ${modelName}`);
+      console.log(`Attempting SRE insight generation using model: ${modelName}`);
       const response = await ai.models.generateContent({
         model: modelName,
         contents: prompt,
@@ -60,7 +60,7 @@ export const generateAiHealthInsights = async (healthPayload) => {
       }
     } catch (error) {
       lastError = error;
-      console.warn(`⚠️ Model ${modelName} failed (${error.status || 'Error'}: ${error.message}). Trying next fallback...`);
+      console.warn(`Model ${modelName} failed (${error.status || 'Error'}: ${error.message}). Trying next fallback...`);
     }
   }
 

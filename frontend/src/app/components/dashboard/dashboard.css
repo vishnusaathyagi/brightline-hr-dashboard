@@ -110,11 +110,21 @@
   padding-bottom: 8px;
 }
 
-/* Typography & Line-Height Fixes for AI Content */
+/* Optimized Typography & Tighter Spacing for AI Content */
 .formatted-ai-text {
   font-size: 0.95rem;
-  line-height: 1.6;
+  line-height: 1.5;
   color: #334155;
+}
+
+.formatted-ai-text strong {
+  color: #0f172a;
+  font-weight: 600;
+}
+
+.formatted-ai-text h3:first-child,
+.formatted-ai-text .ai-heading:first-child {
+  margin-top: 4px;
 }
 
 .formatted-ai-text .ai-heading, 
@@ -122,14 +132,9 @@
   font-size: 1.05rem;
   font-weight: 700;
   color: #1e293b;
-  margin-top: 16px;
-  margin-bottom: 8px;
-  padding-bottom: 4px;
-}
-
-.formatted-ai-text strong {
-  color: #0f172a;
-  font-weight: 600;
+  margin-top: 18px !important;
+  margin-bottom: 2px !important; /* Forces text to sit directly under the heading */
+  padding-bottom: 0px !important;
 }
 
 /* Severity Status Colored Pills with ::ng-deep */
@@ -343,4 +348,36 @@ button:focus, a:focus, [tabindex="0"]:focus {
   font-size: 0.9rem;
   color: #7f1d1d;
   max-width: 500px;
+}
+
+/* Telemetry Table Status Pill Spacing */
+.telemetry-table .status-pill {
+  margin-left: 0 !important; /* Table cells alignment fix */
+  text-transform: uppercase;
+}
+
+/* Accessibility Focus States - Buttons and Links only */
+button:focus, a:focus {
+  outline: 3px solid #f39c12;
+  outline-offset: 2px;
+}
+
+/* Remove outline/border when tabindex container is focused */
+[tabindex="0"]:focus {
+  outline: none !important;
+}
+
+/* AI Response Container Box Focus Override */
+.ai-response-box:focus {
+  outline: none !important;
+  border: 1px solid #e2e8f0 !important;
+  border-left: 4px solid #3b82f6 !important;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.02) !important;
+}
+
+/* Remove orange focus outline from the AI Trigger Button when clicked */
+.ai-trigger-btn:focus, 
+.ai-trigger-btn:active {
+  outline: none !important;
+  box-shadow: 0 0 0 3px rgba(41, 128, 185, 0.3); /* Professional subtle blue focus glow instead of orange */
 }
