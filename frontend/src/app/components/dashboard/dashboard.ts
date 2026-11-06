@@ -1,5 +1,6 @@
 import { Component, OnInit, inject, DestroyRef, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { FormsModule } from '@angular/forms';   // Required for ngModel filtering
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { finalize } from 'rxjs/operators';
 import { HealthService } from '../../services/health';
@@ -7,7 +8,7 @@ import { HealthService } from '../../services/health';
 @Component({
   selector: 'app-dashboard',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, FormsModule],
   templateUrl: './dashboard.html',
   styleUrls: ['./dashboard.css']
 })
@@ -26,10 +27,14 @@ export class DashboardComponent implements OnInit {
   errorMessage: string = '';
   aiErrorMessage: string = '';
 
-  // Track expanded integration state (Accordion)
+  // Filter & Search State
+  searchQuery: string = '';
+  selectedStatus: string = 'ALL';
+  startDate: string = '';
+  endDate: string = '';
+
+  // Accordion & Pagination State
   expandedRows: { [key: string]: boolean } = {};
-  
-  // Track active page per integration log table (pageSize = 5)
   logPages: { [key: string]: number } = {};
   pageSize: number = 5;
 
@@ -54,7 +59,6 @@ export class DashboardComponent implements OnInit {
             this.systemStatus = resData.systemStatus || 'UNKNOWN';
             this.integrations = resData.integrations || [];
             
-            // Initialize pagination pages
             this.integrations.forEach(item => {
               this.logPages[item.integrationId] = 1;
             });
@@ -71,32 +75,41 @@ export class DashboardComponent implements OnInit {
       });
   }
 
-  toggleRow(integrationId: string): void {
-    const isCurrentlyOpen = !!this.expandedRows[integrationId];
-    
-    // Close all expanded rows first (Accordion behavior)
-    this.expandedRows = {};
-    
-    // If the clicked row wasn't open, open it now
-    if (!isCurrentlyOpen) {
-      this.expandedRows[integrationId] = true;
-    }
-    
-    this.cdRef.detectChanges();
+  // Filter integrations based on search text and status dropdown
+  get filteredIntegrations(): any[] {
+    return this.integrations.filter(item => {
+      const matchesSearch = item.integrationId.toLowerCase().includes(this.searchQuery.toLowerCase());
+      const matchesStatus = this.selectedStatus === 'ALL' || item.status === this.selectedStatus;
+      return matchesSearch && matchesStatus;
+    });
   }
 
-  isRowExpanded(integrationId: string): boolean {
-    return !!this.expandedRows[integrationId];
+  // Filter raw logs inside expanded table by date range
+  getFilteredLogs(integration: any): any[] {
+    let logs = integration.rawLogs || [];
+
+    if (this.startDate) {
+      const start = new Date(this.startDate).getTime();
+      logs = logs.filter((log: any) => new Date(log.timestamp).getTime() >= start);
+    }
+
+    if (this.endDate) {
+      const end = new Date(this.endDate).getTime() + 86400000; // Include full end day
+      logs = logs.filter((log: any) => new Date(log.timestamp).getTime() <= end);
+    }
+
+    return logs;
   }
 
   getPaginatedLogs(integration: any): any[] {
+    const filteredLogs = this.getFilteredLogs(integration);
     const currentPage = this.logPages[integration.integrationId] || 1;
     const startIndex = (currentPage - 1) * this.pageSize;
-    return (integration.rawLogs || []).slice(startIndex, startIndex + this.pageSize);
+    return filteredLogs.slice(startIndex, startIndex + this.pageSize);
   }
 
   getTotalPages(integration: any): number {
-    const totalLogs = integration.rawLogs?.length || 0;
+    const totalLogs = this.getFilteredLogs(integration).length;
     return Math.ceil(totalLogs / this.pageSize) || 1;
   }
 
@@ -106,6 +119,27 @@ export class DashboardComponent implements OnInit {
       this.logPages[integrationId] = page;
       this.cdRef.detectChanges();
     }
+  }
+
+  toggleRow(integrationId: string): void {
+    const isCurrentlyOpen = !!this.expandedRows[integrationId];
+    this.expandedRows = {}; // Exclusive accordion
+    if (!isCurrentlyOpen) {
+      this.expandedRows[integrationId] = true;
+    }
+    this.cdRef.detectChanges();
+  }
+
+  isRowExpanded(integrationId: string): boolean {
+    return !!this.expandedRows[integrationId];
+  }
+
+  resetFilters(): void {
+    this.searchQuery = '';
+    this.selectedStatus = 'ALL';
+    this.startDate = '';
+    this.endDate = '';
+    this.cdRef.detectChanges();
   }
 
   fetchAiInsights(): void {

@@ -1,12 +1,10 @@
 <main class="dashboard-container" role="main" aria-label="Brightline HR Integration Dashboard">
   
-  <!-- Header Section -->
   <header class="dashboard-header">
     <h1 tabindex="0">Brightline HR - Enterprise Integration Dashboard</h1>
     <p class="subtitle">Real-time SRE telemetry monitoring and AI-driven self-healing playbooks.</p>
   </header>
 
-  <!-- Page Loading Wave Spinner -->
   <div *ngIf="isLoadingHealth" class="loader-container" aria-label="Loading dashboard metrics">
     <div class="wave-spinner">
       <span></span><span></span><span></span><span></span><span></span>
@@ -14,10 +12,8 @@
     <p>Loading real-time system health...</p>
   </div>
 
-  <!-- Main Content -->
   <ng-container *ngIf="!isLoadingHealth">
     
-    <!-- System Status Overview Card -->
     <section class="status-card" aria-labelledby="status-heading">
       <h2 id="status-heading">Overall System Health</h2>
       
@@ -36,6 +32,43 @@
       </ng-template>
     </section>
 
+    <!-- Advanced Filtering & Date Range Controls Toolbar -->
+    <section class="filter-toolbar" aria-label="Telemetry Filters">
+      <div class="filter-group">
+        <label for="search-integration">Search Integration:</label>
+        <input 
+          id="search-integration" 
+          type="text" 
+          [(ngModel)]="searchQuery" 
+          placeholder="e.g. Workday, Slack..." 
+          class="filter-input" />
+      </div>
+
+      <div class="filter-group">
+        <label for="status-filter">Filter Status:</label>
+        <select id="status-filter" [(ngModel)]="selectedStatus" class="filter-select">
+          <option value="ALL">All Statuses</option>
+          <option value="HEALTHY">HEALTHY</option>
+          <option value="DEGRADED">DEGRADED</option>
+          <option value="UNHEALTHY">UNHEALTHY</option>
+        </select>
+      </div>
+
+      <div class="filter-group">
+        <label for="start-date">From Date:</label>
+        <input id="start-date" type="date" [(ngModel)]="startDate" class="filter-input" />
+      </div>
+
+      <div class="filter-group">
+        <label for="end-date">To Date:</label>
+        <input id="end-date" type="date" [(ngModel)]="endDate" class="filter-input" />
+      </div>
+
+      <div class="filter-actions">
+        <button class="reset-filter-btn" (click)="resetFilters()">Reset Filters</button>
+      </div>
+    </section>
+
     <!-- Integrations Telemetry Table -->
     <section class="table-section" aria-labelledby="table-heading">
       <h2 id="table-heading">Integration Endpoints Telemetry</h2>
@@ -52,8 +85,7 @@
           </tr>
         </thead>
         <tbody>
-          <ng-container *ngFor="let item of integrations">
-            <!-- Main Summary Row -->
+          <ng-container *ngFor="let item of filteredIntegrations">
             <tr [class.expanded-parent]="isRowExpanded(item.integrationId)">
               <td><strong>{{ item.integrationId }}</strong></td>
               <td>{{ item.totalRequests }}</td>
@@ -76,11 +108,11 @@
               </td>
             </tr>
 
-            <!-- Nested Collapsible Log Table Row -->
+            <!-- Nested Log Table with Date Filtering -->
             <tr *ngIf="isRowExpanded(item.integrationId)" class="nested-log-row">
               <td colspan="6" class="nested-log-container">
                 <div class="inner-log-box">
-                  <h4>Request Log History ({{ item.rawLogs?.length || 0 }} total entries)</h4>
+                  <h4>Request Log History (Showing {{ getFilteredLogs(item).length }} entries)</h4>
                   
                   <table class="inner-log-table">
                     <thead>
@@ -104,14 +136,13 @@
                         <td>{{ log.response_time_ms }} ms</td>
                         <td class="error-col">{{ log.error_message || '-' }}</td>
                       </tr>
-                      <tr *ngIf="!item.rawLogs || item.rawLogs.length === 0">
-                        <td colspan="5" class="empty-logs">No detailed logs recorded for this endpoint.</td>
+                      <tr *ngIf="getFilteredLogs(item).length === 0">
+                        <td colspan="5" class="empty-logs">No matching logs found for the selected date range.</td>
                       </tr>
                     </tbody>
                   </table>
 
-                  <!-- Inner Pagination Controls -->
-                  <div class="pagination-bar" *ngIf="item.rawLogs && item.rawLogs.length > pageSize">
+                  <div class="pagination-bar" *ngIf="getFilteredLogs(item).length > pageSize">
                     <button [disabled]="logPages[item.integrationId] === 1" (click)="changePage(item.integrationId, logPages[item.integrationId] - 1)">
                       ◀ Prev
                     </button>
@@ -124,6 +155,9 @@
               </td>
             </tr>
           </ng-container>
+          <tr *ngIf="filteredIntegrations.length === 0">
+            <td colspan="6" class="empty-logs" style="padding: 24px;">No integrations match your search criteria.</td>
+          </tr>
         </tbody>
       </table>
     </section>
