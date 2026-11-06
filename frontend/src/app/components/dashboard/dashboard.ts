@@ -72,7 +72,16 @@ export class DashboardComponent implements OnInit {
   }
 
   toggleRow(integrationId: string): void {
-    this.expandedRows[integrationId] = !this.expandedRows[integrationId];
+    const isCurrentlyOpen = !!this.expandedRows[integrationId];
+    
+    // Close all expanded rows first (Accordion behavior)
+    this.expandedRows = {};
+    
+    // If the clicked row wasn't open, open it now
+    if (!isCurrentlyOpen) {
+      this.expandedRows[integrationId] = true;
+    }
+    
     this.cdRef.detectChanges();
   }
 
