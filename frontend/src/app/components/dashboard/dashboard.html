@@ -146,7 +146,9 @@
                         <th (click)="sortInnerTable(item.integrationId, 'response_time_ms')" class="sortable-th">
                           Response Time <span class="sort-icon">{{ innerSortColumns[item.integrationId] === 'response_time_ms' ? (innerSortDirections[item.integrationId] === 'asc' ? '▲' : '▼') : '↕' }}</span>
                         </th>
-                        <th>Error Message</th>
+                        <th (click)="sortInnerTable(item.integrationId, 'error_message')" class="sortable-th">
+                          Error Message <span class="sort-icon">{{ innerSortColumns[item.integrationId] === 'error_message' ? (innerSortDirections[item.integrationId] === 'asc' ? '▲' : '▼') : '↕' }}</span>
+                        </th>
                       </tr>
                     </thead>
                     <tbody>

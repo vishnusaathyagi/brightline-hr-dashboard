@@ -153,8 +153,12 @@ export class DashboardComponent implements OnInit {
         valA = new Date(valA).getTime();
         valB = new Date(valB).getTime();
       } else if (typeof valA === 'string') {
-        valA = valA.toLowerCase();
-        valB = valB.toLowerCase();
+        valA = (valA || '').toLowerCase();
+        valB = (valB || '').toLowerCase();
+      } else if (valA === null || valA === undefined) {
+        valA = '';
+      } else if (valB === null || valB === undefined) {
+        valB = '';
       }
 
       if (valA < valB) return sortDir === 'asc' ? -1 : 1;
