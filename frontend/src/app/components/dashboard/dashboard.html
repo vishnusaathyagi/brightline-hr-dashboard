@@ -32,10 +32,10 @@
       </ng-template>
     </section>
 
-    <!-- Advanced Filtering & Date Range Controls Toolbar -->
+    <!-- Advanced Metrics & Metadata Filtering Toolbar -->
     <section class="filter-toolbar" aria-label="Telemetry Filters">
       <div class="filter-group">
-        <label for="search-integration">Search Integration:</label>
+        <label for="search-integration">Integration ID:</label>
         <input 
           id="search-integration" 
           type="text" 
@@ -45,13 +45,28 @@
       </div>
 
       <div class="filter-group">
-        <label for="status-filter">Filter Status:</label>
+        <label for="status-filter">Status:</label>
         <select id="status-filter" [(ngModel)]="selectedStatus" class="filter-select">
           <option value="ALL">All Statuses</option>
           <option value="HEALTHY">HEALTHY</option>
           <option value="DEGRADED">DEGRADED</option>
           <option value="UNHEALTHY">UNHEALTHY</option>
         </select>
+      </div>
+
+      <div class="filter-group">
+        <label for="min-requests">Min Requests:</label>
+        <input id="min-requests" type="number" [(ngModel)]="minRequests" placeholder="e.g. 10" class="filter-input" />
+      </div>
+
+      <div class="filter-group">
+        <label for="min-error">Min Error Rate (%):</label>
+        <input id="min-error" type="number" step="0.1" [(ngModel)]="minErrorRate" placeholder="e.g. 5.0" class="filter-input" />
+      </div>
+
+      <div class="filter-group">
+        <label for="max-latency">Max P95 Latency (ms):</label>
+        <input id="max-latency" type="number" [(ngModel)]="maxLatency" placeholder="e.g. 800" class="filter-input" />
       </div>
 
       <div class="filter-group">
@@ -108,7 +123,7 @@
               </td>
             </tr>
 
-            <!-- Nested Log Table with Date Filtering -->
+            <!-- Nested Log Table -->
             <tr *ngIf="isRowExpanded(item.integrationId)" class="nested-log-row">
               <td colspan="6" class="nested-log-container">
                 <div class="inner-log-box">
@@ -137,7 +152,7 @@
                         <td class="error-col">{{ log.error_message || '-' }}</td>
                       </tr>
                       <tr *ngIf="getFilteredLogs(item).length === 0">
-                        <td colspan="5" class="empty-logs">No matching logs found for the selected date range.</td>
+                        <td colspan="5" class="empty-logs">No matching logs found for the selected criteria.</td>
                       </tr>
                     </tbody>
                   </table>
@@ -156,7 +171,7 @@
             </tr>
           </ng-container>
           <tr *ngIf="filteredIntegrations.length === 0">
-            <td colspan="6" class="empty-logs" style="padding: 24px;">No integrations match your search criteria.</td>
+            <td colspan="6" class="empty-logs" style="padding: 24px;">No integrations match your search and metric filters.</td>
           </tr>
         </tbody>
       </table>

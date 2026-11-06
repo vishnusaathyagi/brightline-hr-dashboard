@@ -1,6 +1,6 @@
 import { Component, OnInit, inject, DestroyRef, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { FormsModule } from '@angular/forms';   // Required for ngModel filtering
+import { FormsModule } from '@angular/forms';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { finalize } from 'rxjs/operators';
 import { HealthService } from '../../services/health';
@@ -27,9 +27,12 @@ export class DashboardComponent implements OnInit {
   errorMessage: string = '';
   aiErrorMessage: string = '';
 
-  // Filter & Search State
+  // Advanced Filter & Metrics State
   searchQuery: string = '';
   selectedStatus: string = 'ALL';
+  minRequests: number | null = null;
+  minErrorRate: number | null = null;
+  maxLatency: number | null = null;
   startDate: string = '';
   endDate: string = '';
 
@@ -75,16 +78,19 @@ export class DashboardComponent implements OnInit {
       });
   }
 
-  // Filter integrations based on search text and status dropdown
+  // Enhanced Filter Logic including Requests, Error Rate, and Latency thresholds
   get filteredIntegrations(): any[] {
     return this.integrations.filter(item => {
       const matchesSearch = item.integrationId.toLowerCase().includes(this.searchQuery.toLowerCase());
       const matchesStatus = this.selectedStatus === 'ALL' || item.status === this.selectedStatus;
-      return matchesSearch && matchesStatus;
+      const matchesRequests = this.minRequests === null || item.totalRequests >= this.minRequests;
+      const matchesErrorRate = this.minErrorRate === null || item.errorRate >= this.minErrorRate;
+      const matchesLatency = this.maxLatency === null || item.p95LatencyMs <= this.maxLatency;
+
+      return matchesSearch && matchesStatus && matchesRequests && matchesErrorRate && matchesLatency;
     });
   }
 
-  // Filter raw logs inside expanded table by date range
   getFilteredLogs(integration: any): any[] {
     let logs = integration.rawLogs || [];
 
@@ -94,7 +100,7 @@ export class DashboardComponent implements OnInit {
     }
 
     if (this.endDate) {
-      const end = new Date(this.endDate).getTime() + 86400000; // Include full end day
+      const end = new Date(this.endDate).getTime() + 86400000;
       logs = logs.filter((log: any) => new Date(log.timestamp).getTime() <= end);
     }
 
@@ -137,6 +143,9 @@ export class DashboardComponent implements OnInit {
   resetFilters(): void {
     this.searchQuery = '';
     this.selectedStatus = 'ALL';
+    this.minRequests = null;
+    this.minErrorRate = null;
+    this.maxLatency = null;
     this.startDate = '';
     this.endDate = '';
     this.cdRef.detectChanges();
