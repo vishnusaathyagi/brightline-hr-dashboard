@@ -27,14 +27,20 @@ export class DashboardComponent implements OnInit {
   errorMessage: string = '';
   aiErrorMessage: string = '';
 
-  // Advanced Filter & Metrics State
+  // Filter State
   searchQuery: string = '';
   selectedStatus: string = 'ALL';
   minRequests: number | null = null;
   minErrorRate: number | null = null;
   maxLatency: number | null = null;
-  startDate: string = '';
-  endDate: string = '';
+
+  // Main Table Sorting State
+  mainSortColumn: string = 'integrationId';
+  mainSortDirection: 'asc' | 'desc' = 'asc';
+
+  // Inner Log Table Sorting State (Per Integration ID)
+  innerSortColumns: { [key: string]: string } = {};
+  innerSortDirections: { [key: string]: 'asc' | 'desc' } = {};
 
   // Accordion & Pagination State
   expandedRows: { [key: string]: boolean } = {};
@@ -64,6 +70,8 @@ export class DashboardComponent implements OnInit {
             
             this.integrations.forEach(item => {
               this.logPages[item.integrationId] = 1;
+              this.innerSortColumns[item.integrationId] = 'timestamp';
+              this.innerSortDirections[item.integrationId] = 'desc'; // Latest logs first by default
             });
 
             this.errorMessage = '';
@@ -78,9 +86,34 @@ export class DashboardComponent implements OnInit {
       });
   }
 
-  // Enhanced Filter Logic including Requests, Error Rate, and Latency thresholds
+  // Sort Main Integrations Table
+  sortMainTable(column: string): void {
+    if (this.mainSortColumn === column) {
+      this.mainSortDirection = this.mainSortDirection === 'asc' ? 'desc' : 'asc';
+    } else {
+      this.mainSortColumn = column;
+      this.mainSortDirection = 'asc';
+    }
+    this.cdRef.detectChanges();
+  }
+
+  // Sort Inner Logs Table per Integration
+  sortInnerTable(integrationId: string, column: string): void {
+    const currentColumn = this.innerSortColumns[integrationId];
+    let currentDir = this.innerSortDirections[integrationId] || 'asc';
+
+    if (currentColumn === column) {
+      this.innerSortDirections[integrationId] = currentDir === 'asc' ? 'desc' : 'asc';
+    } else {
+      this.innerSortColumns[integrationId] = column;
+      this.innerSortDirections[integrationId] = 'asc';
+    }
+    this.cdRef.detectChanges();
+  }
+
+  // Filtered & Sorted Integrations Array
   get filteredIntegrations(): any[] {
-    return this.integrations.filter(item => {
+    const filtered = this.integrations.filter(item => {
       const matchesSearch = item.integrationId.toLowerCase().includes(this.searchQuery.toLowerCase());
       const matchesStatus = this.selectedStatus === 'ALL' || item.status === this.selectedStatus;
       const matchesRequests = this.minRequests === null || item.totalRequests >= this.minRequests;
@@ -89,33 +122,53 @@ export class DashboardComponent implements OnInit {
 
       return matchesSearch && matchesStatus && matchesRequests && matchesErrorRate && matchesLatency;
     });
+
+    // Apply Sorting
+    return filtered.sort((a, b) => {
+      let valA = a[this.mainSortColumn];
+      let valB = b[this.mainSortColumn];
+
+      if (typeof valA === 'string') {
+        valA = valA.toLowerCase();
+        valB = valB.toLowerCase();
+      }
+
+      if (valA < valB) return this.mainSortDirection === 'asc' ? -1 : 1;
+      if (valA > valB) return this.mainSortDirection === 'asc' ? 1 : -1;
+      return 0;
+    });
   }
 
-  getFilteredLogs(integration: any): any[] {
-    let logs = integration.rawLogs || [];
+  // Sorted & Paginated Inner Logs
+  getSortedAndPaginatedLogs(integration: any): any[] {
+    const rawLogs = [...(integration.rawLogs || [])];
+    const sortCol = this.innerSortColumns[integration.integrationId] || 'timestamp';
+    const sortDir = this.innerSortDirections[integration.integrationId] || 'desc';
 
-    if (this.startDate) {
-      const start = new Date(this.startDate).getTime();
-      logs = logs.filter((log: any) => new Date(log.timestamp).getTime() >= start);
-    }
+    rawLogs.sort((a, b) => {
+      let valA = a[sortCol];
+      let valB = b[sortCol];
 
-    if (this.endDate) {
-      const end = new Date(this.endDate).getTime() + 86400000;
-      logs = logs.filter((log: any) => new Date(log.timestamp).getTime() <= end);
-    }
+      if (sortCol === 'timestamp') {
+        valA = new Date(valA).getTime();
+        valB = new Date(valB).getTime();
+      } else if (typeof valA === 'string') {
+        valA = valA.toLowerCase();
+        valB = valB.toLowerCase();
+      }
 
-    return logs;
-  }
+      if (valA < valB) return sortDir === 'asc' ? -1 : 1;
+      if (valA > valB) return sortDir === 'asc' ? 1 : -1;
+      return 0;
+    });
 
-  getPaginatedLogs(integration: any): any[] {
-    const filteredLogs = this.getFilteredLogs(integration);
     const currentPage = this.logPages[integration.integrationId] || 1;
     const startIndex = (currentPage - 1) * this.pageSize;
-    return filteredLogs.slice(startIndex, startIndex + this.pageSize);
+    return rawLogs.slice(startIndex, startIndex + this.pageSize);
   }
 
   getTotalPages(integration: any): number {
-    const totalLogs = this.getFilteredLogs(integration).length;
+    const totalLogs = (integration.rawLogs || []).length;
     return Math.ceil(totalLogs / this.pageSize) || 1;
   }
 
@@ -129,7 +182,7 @@ export class DashboardComponent implements OnInit {
 
   toggleRow(integrationId: string): void {
     const isCurrentlyOpen = !!this.expandedRows[integrationId];
-    this.expandedRows = {}; // Exclusive accordion
+    this.expandedRows = {}; // Exclusive accordion behavior
     if (!isCurrentlyOpen) {
       this.expandedRows[integrationId] = true;
     }
@@ -146,8 +199,6 @@ export class DashboardComponent implements OnInit {
     this.minRequests = null;
     this.minErrorRate = null;
     this.maxLatency = null;
-    this.startDate = '';
-    this.endDate = '';
     this.cdRef.detectChanges();
   }
 

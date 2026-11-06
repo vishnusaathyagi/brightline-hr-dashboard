@@ -32,70 +32,72 @@
       </ng-template>
     </section>
 
-    <!-- Advanced Metrics & Metadata Filtering Toolbar -->
-    <section class="filter-toolbar" aria-label="Telemetry Filters">
-      <div class="filter-group">
-        <label for="search-integration">Integration ID:</label>
-        <input 
-          id="search-integration" 
-          type="text" 
-          [(ngModel)]="searchQuery" 
-          placeholder="e.g. Workday, Slack..." 
-          class="filter-input" />
-      </div>
-
-      <div class="filter-group">
-        <label for="status-filter">Status:</label>
-        <select id="status-filter" [(ngModel)]="selectedStatus" class="filter-select">
-          <option value="ALL">All Statuses</option>
-          <option value="HEALTHY">HEALTHY</option>
-          <option value="DEGRADED">DEGRADED</option>
-          <option value="UNHEALTHY">UNHEALTHY</option>
-        </select>
-      </div>
-
-      <div class="filter-group">
-        <label for="min-requests">Min Requests:</label>
-        <input id="min-requests" type="number" [(ngModel)]="minRequests" placeholder="e.g. 10" class="filter-input" />
-      </div>
-
-      <div class="filter-group">
-        <label for="min-error">Min Error Rate (%):</label>
-        <input id="min-error" type="number" step="0.1" [(ngModel)]="minErrorRate" placeholder="e.g. 5.0" class="filter-input" />
-      </div>
-
-      <div class="filter-group">
-        <label for="max-latency">Max P95 Latency (ms):</label>
-        <input id="max-latency" type="number" [(ngModel)]="maxLatency" placeholder="e.g. 800" class="filter-input" />
-      </div>
-
-      <div class="filter-group">
-        <label for="start-date">From Date:</label>
-        <input id="start-date" type="date" [(ngModel)]="startDate" class="filter-input" />
-      </div>
-
-      <div class="filter-group">
-        <label for="end-date">To Date:</label>
-        <input id="end-date" type="date" [(ngModel)]="endDate" class="filter-input" />
-      </div>
-
-      <div class="filter-actions">
-        <button class="reset-filter-btn" (click)="resetFilters()">Reset Filters</button>
-      </div>
-    </section>
-
-    <!-- Integrations Telemetry Table -->
+    <!-- Integrations Telemetry Table Section -->
     <section class="table-section" aria-labelledby="table-heading">
-      <h2 id="table-heading">Integration Endpoints Telemetry</h2>
+      <div class="table-header-flex">
+        <h2 id="table-heading">Integration Endpoints Telemetry</h2>
+      </div>
+
+      <div class="inner-filter-toolbar" aria-label="Telemetry Filters">
+        <div class="filter-group">
+          <label for="search-integration">Integration ID:</label>
+          <input 
+            id="search-integration" 
+            type="text" 
+            [(ngModel)]="searchQuery" 
+            placeholder="e.g. Workday, Slack..." 
+            class="filter-input" />
+        </div>
+
+        <div class="filter-group">
+          <label for="status-filter">Status:</label>
+          <select id="status-filter" [(ngModel)]="selectedStatus" class="filter-select">
+            <option value="ALL">All Statuses</option>
+            <option value="HEALTHY">HEALTHY</option>
+            <option value="DEGRADED">DEGRADED</option>
+            <option value="UNHEALTHY">UNHEALTHY</option>
+          </select>
+        </div>
+
+        <div class="filter-group">
+          <label for="min-requests">Min Requests:</label>
+          <input id="min-requests" type="number" [(ngModel)]="minRequests" placeholder="e.g. 10" class="filter-input" />
+        </div>
+
+        <div class="filter-group">
+          <label for="min-error">Min Error Rate (%):</label>
+          <input id="min-error" type="number" step="0.1" [(ngModel)]="minErrorRate" placeholder="e.g. 5.0" class="filter-input" />
+        </div>
+
+        <div class="filter-group">
+          <label for="max-latency">Max P95 Latency (ms):</label>
+          <input id="max-latency" type="number" [(ngModel)]="maxLatency" placeholder="e.g. 800" class="filter-input" />
+        </div>
+
+        <div class="filter-actions">
+          <button class="reset-filter-btn" (click)="resetFilters()">Reset</button>
+        </div>
+      </div>
       
+      <!-- Main Telemetry Table with Sorting Headers -->
       <table class="telemetry-table" aria-describedby="table-heading">
         <thead>
           <tr>
-            <th scope="col">Integration ID</th>
-            <th scope="col">Total Requests</th>
-            <th scope="col">Error Rate (%)</th>
-            <th scope="col">P95 Latency (ms)</th>
-            <th scope="col">Status</th>
+            <th scope="col" (click)="sortMainTable('integrationId')" class="sortable-th">
+              Integration ID <span class="sort-icon">{{ mainSortColumn === 'integrationId' ? (mainSortDirection === 'asc' ? '▲' : '▼') : '↕' }}</span>
+            </th>
+            <th scope="col" (click)="sortMainTable('totalRequests')" class="sortable-th">
+              Total Requests <span class="sort-icon">{{ mainSortColumn === 'totalRequests' ? (mainSortDirection === 'asc' ? '▲' : '▼') : '↕' }}</span>
+            </th>
+            <th scope="col" (click)="sortMainTable('errorRate')" class="sortable-th">
+              Error Rate (%) <span class="sort-icon">{{ mainSortColumn === 'errorRate' ? (mainSortDirection === 'asc' ? '▲' : '▼') : '↕' }}</span>
+            </th>
+            <th scope="col" (click)="sortMainTable('p95LatencyMs')" class="sortable-th">
+              P95 Latency (ms) <span class="sort-icon">{{ mainSortColumn === 'p95LatencyMs' ? (mainSortDirection === 'asc' ? '▲' : '▼') : '↕' }}</span>
+            </th>
+            <th scope="col" (click)="sortMainTable('status')" class="sortable-th">
+              Status <span class="sort-icon">{{ mainSortColumn === 'status' ? (mainSortDirection === 'asc' ? '▲' : '▼') : '↕' }}</span>
+            </th>
             <th scope="col" style="text-align: center; width: 90px;">Details</th>
           </tr>
         </thead>
@@ -123,24 +125,32 @@
               </td>
             </tr>
 
-            <!-- Nested Log Table -->
+            <!-- Nested Accordion Log Table with Inner Sorting -->
             <tr *ngIf="isRowExpanded(item.integrationId)" class="nested-log-row">
               <td colspan="6" class="nested-log-container">
                 <div class="inner-log-box">
-                  <h4>Request Log History (Showing {{ getFilteredLogs(item).length }} entries)</h4>
+                  <h4>Request Log History ({{ item.rawLogs?.length || 0 }} total entries)</h4>
                   
                   <table class="inner-log-table">
                     <thead>
                       <tr>
-                        <th>Timestamp</th>
-                        <th>Endpoint</th>
-                        <th>Status Code</th>
-                        <th>Response Time</th>
+                        <th (click)="sortInnerTable(item.integrationId, 'timestamp')" class="sortable-th">
+                          Timestamp <span class="sort-icon">{{ innerSortColumns[item.integrationId] === 'timestamp' ? (innerSortDirections[item.integrationId] === 'asc' ? '▲' : '▼') : '↕' }}</span>
+                        </th>
+                        <th (click)="sortInnerTable(item.integrationId, 'endpoint')" class="sortable-th">
+                          Endpoint <span class="sort-icon">{{ innerSortColumns[item.integrationId] === 'endpoint' ? (innerSortDirections[item.integrationId] === 'asc' ? '▲' : '▼') : '↕' }}</span>
+                        </th>
+                        <th (click)="sortInnerTable(item.integrationId, 'status_code')" class="sortable-th">
+                          Status Code <span class="sort-icon">{{ innerSortColumns[item.integrationId] === 'status_code' ? (innerSortDirections[item.integrationId] === 'asc' ? '▲' : '▼') : '↕' }}</span>
+                        </th>
+                        <th (click)="sortInnerTable(item.integrationId, 'response_time_ms')" class="sortable-th">
+                          Response Time <span class="sort-icon">{{ innerSortColumns[item.integrationId] === 'response_time_ms' ? (innerSortDirections[item.integrationId] === 'asc' ? '▲' : '▼') : '↕' }}</span>
+                        </th>
                         <th>Error Message</th>
                       </tr>
                     </thead>
                     <tbody>
-                      <tr *ngFor="let log of getPaginatedLogs(item)">
+                      <tr *ngFor="let log of getSortedAndPaginatedLogs(item)">
                         <td>{{ log.timestamp | date:'yyyy-MM-dd HH:mm:ss' }}</td>
                         <td><code>{{ log.endpoint }}</code></td>
                         <td>
@@ -151,13 +161,13 @@
                         <td>{{ log.response_time_ms }} ms</td>
                         <td class="error-col">{{ log.error_message || '-' }}</td>
                       </tr>
-                      <tr *ngIf="getFilteredLogs(item).length === 0">
-                        <td colspan="5" class="empty-logs">No matching logs found for the selected criteria.</td>
+                      <tr *ngIf="!item.rawLogs || item.rawLogs.length === 0">
+                        <td colspan="5" class="empty-logs">No detailed logs recorded for this endpoint.</td>
                       </tr>
                     </tbody>
                   </table>
 
-                  <div class="pagination-bar" *ngIf="getFilteredLogs(item).length > pageSize">
+                  <div class="pagination-bar" *ngIf="item.rawLogs && item.rawLogs.length > pageSize">
                     <button [disabled]="logPages[item.integrationId] === 1" (click)="changePage(item.integrationId, logPages[item.integrationId] - 1)">
                       ◀ Prev
                     </button>
