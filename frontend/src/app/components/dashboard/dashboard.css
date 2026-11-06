@@ -381,3 +381,131 @@ button:focus, a:focus {
   outline: none !important;
   box-shadow: 0 0 0 3px rgba(41, 128, 185, 0.3); /* Professional subtle blue focus glow instead of orange */
 }
+
+/* Toggle Icon Button */
+.icon-toggle-btn {
+  background: #f1f5f9;
+  border: 1px solid #cbd5e1;
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+  color: #334155;
+  padding: 4px 10px;
+  border-radius: 4px;
+  transition: all 0.2s ease;
+}
+
+.icon-toggle-btn:hover {
+  background-color: #3b82f6;
+  color: #ffffff;
+  border-color: #3b82f6;
+}
+
+/* Expanded Row Highlighting */
+tr.expanded-parent {
+  background-color: #f8fafc;
+}
+
+/* Nested Container */
+.nested-log-row {
+  background-color: #f8fafc;
+}
+
+.nested-log-container {
+  padding: 12px 20px !important;
+  border-bottom: 2px solid #cbd5e1 !important;
+}
+
+.inner-log-box {
+  background: #ffffff;
+  border: 1px solid #cbd5e1;
+  border-radius: 6px;
+  padding: 14px 18px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.03);
+}
+
+.inner-log-box h4 {
+  margin: 0 0 10px 0;
+  font-size: 0.85rem;
+  color: #475569;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+/* Inner Log Table Styling */
+.inner-log-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.85rem;
+}
+
+.inner-log-table th {
+  background-color: #f1f5f9;
+  color: #334155;
+  font-weight: 600;
+  padding: 8px 10px;
+  border-bottom: 2px solid #e2e8f0;
+  text-align: left;
+}
+
+.inner-log-table td {
+  padding: 8px 10px;
+  border-bottom: 1px solid #e2e8f0;
+  color: #1e293b;
+}
+
+.text-danger {
+  color: #dc2626;
+  font-weight: 600;
+}
+
+.text-success {
+  color: #16a34a;
+  font-weight: 600;
+}
+
+.error-col {
+  color: #991b1b;
+  font-size: 0.8rem;
+  font-style: italic;
+}
+
+.empty-logs {
+  text-align: center;
+  color: #64748b;
+  padding: 12px;
+  font-style: italic;
+}
+
+/* Pagination Bar */
+.pagination-bar {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 12px;
+  margin-top: 12px;
+  font-size: 0.8rem;
+  color: #64748b;
+}
+
+.pagination-bar button {
+  background: #ffffff;
+  border: 1px solid #cbd5e1;
+  border-radius: 4px;
+  padding: 4px 10px;
+  cursor: pointer;
+  font-size: 0.75rem;
+  font-weight: 600;
+  transition: all 0.2s ease;
+}
+
+.pagination-bar button:hover:not(:disabled) {
+  background: #3b82f6;
+  color: #ffffff;
+  border-color: #3b82f6;
+}
+
+.pagination-bar button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}

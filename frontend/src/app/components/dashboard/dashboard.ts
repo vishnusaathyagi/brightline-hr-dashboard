@@ -23,9 +23,15 @@ export class DashboardComponent implements OnInit {
   isLoadingHealth: boolean = true;
   isLoadingAi: boolean = false;
   
-  // Separated error messages to prevent cross-card interference
-  errorMessage: string = '';       // For system health load errors
-  aiErrorMessage: string = '';     // For AI generation errors only
+  errorMessage: string = '';
+  aiErrorMessage: string = '';
+
+  // Track expanded integration state (Accordion)
+  expandedRows: { [key: string]: boolean } = {};
+  
+  // Track active page per integration log table (pageSize = 5)
+  logPages: { [key: string]: number } = {};
+  pageSize: number = 5;
 
   ngOnInit(): void {
     this.loadSystemHealth();
@@ -47,6 +53,12 @@ export class DashboardComponent implements OnInit {
           if (response.success !== false) {
             this.systemStatus = resData.systemStatus || 'UNKNOWN';
             this.integrations = resData.integrations || [];
+            
+            // Initialize pagination pages
+            this.integrations.forEach(item => {
+              this.logPages[item.integrationId] = 1;
+            });
+
             this.errorMessage = '';
             this.cdRef.detectChanges();
           }
@@ -59,10 +71,38 @@ export class DashboardComponent implements OnInit {
       });
   }
 
+  toggleRow(integrationId: string): void {
+    this.expandedRows[integrationId] = !this.expandedRows[integrationId];
+    this.cdRef.detectChanges();
+  }
+
+  isRowExpanded(integrationId: string): boolean {
+    return !!this.expandedRows[integrationId];
+  }
+
+  getPaginatedLogs(integration: any): any[] {
+    const currentPage = this.logPages[integration.integrationId] || 1;
+    const startIndex = (currentPage - 1) * this.pageSize;
+    return (integration.rawLogs || []).slice(startIndex, startIndex + this.pageSize);
+  }
+
+  getTotalPages(integration: any): number {
+    const totalLogs = integration.rawLogs?.length || 0;
+    return Math.ceil(totalLogs / this.pageSize) || 1;
+  }
+
+  changePage(integrationId: string, page: number): void {
+    const integration = this.integrations.find(item => item.integrationId === integrationId);
+    if (integration && page >= 1 && page <= this.getTotalPages(integration)) {
+      this.logPages[integrationId] = page;
+      this.cdRef.detectChanges();
+    }
+  }
+
   fetchAiInsights(): void {
     this.isLoadingAi = true;
     this.aiInsights = '';
-    this.aiErrorMessage = ''; // Reset only AI error message
+    this.aiErrorMessage = '';
 
     this.healthService.getAiInsights()
       .pipe(
@@ -81,34 +121,26 @@ export class DashboardComponent implements OnInit {
           this.cdRef.detectChanges();
         },
         error: (err) => {
-          // Assign error strictly to AI section without affecting system health card
           this.aiErrorMessage = 'Server is offline or unreachable. Unable to generate Gemini AI insights at the moment.';
           this.cdRef.detectChanges();
         }
       });
   }
 
-  /**
-   * Helper function to convert Gemini markdown syntax (**bold**, ### headings, bullet points) into clean HTML
-   */
   private formatMarkdown(text: string): string {
     if (!text) return '';
     return text
       .replace(/---/gim, '')
       .replace(/^### (.*$)/gim, '<h3 class="ai-heading">$1</h3>')
-      .replace(/^## (.*$)/gim, '<h2 class="ai-heading">$1</h2>')
-      // Severity status badges
+      .replace(/^## (.*$)/gim, '<h2 class="ai-heading">$2</h2>')
       .replace(/(\*\*)?(Severity Status:)(\*\*)?\s*\[?(STABLE|HEALTHY)\]?/gim, '<strong>Severity Status:</strong> <span class="status-pill green">STABLE</span>')
       .replace(/(\*\*)?(Severity Status:)(\*\*)?\s*\[?(HIGH|CRITICAL|UNHEALTHY)\]?/gim, '<strong>Severity Status:</strong> <span class="status-pill red">HIGH</span>')
       .replace(/(\*\*)?(Severity Status:)(\*\*)?\s*\[?(MEDIUM|DEGRADED|MODERATE)\]?/gim, '<strong>Severity Status:</strong> <span class="status-pill orange">MEDIUM</span>')
       .replace(/\*\*(.*?)\*\*/gim, '<strong>$1</strong>')
       .replace(/\*(.*?)\*/gim, '<em>$1</em>')
       .replace(/`([^`]+)`/gim, '<code class="ai-code">$1</code>')
-      // 1. Convert newlines to breaks first
       .replace(/\n+/gim, '<br />')
-      // 2. Remove any <br /> immediately following a heading tag (removes heading bottom gap!)
       .replace(/(<\/h[23]>)\s*(<br\s*\/?>)+/gim, '$1')
-      // 3. Clean up multiple consecutive breaks
       .replace(/(<br\s*\/?>\s*){2,}/gim, '<br />');
   }
 }

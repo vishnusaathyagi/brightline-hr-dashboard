@@ -20,7 +20,7 @@ export const ENV = {
 };
 
 if (!ENV.GEMINI_API_KEY) {
-  console.warn("⚠️ WARNING: GEMINI_API_KEY is missing! Check your .env path.");
+  console.warn("WARNING: GEMINI_API_KEY is missing! Check your .env path.");
 } else {
-  console.log("✅ Gemini API Key loaded successfully!");
+  console.log("Gemini API Key loaded successfully!");
 }
