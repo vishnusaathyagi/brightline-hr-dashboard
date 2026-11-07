@@ -4,12 +4,14 @@
 import { GoogleGenAI } from '@google/genai';
 import { ENV } from '../config/env.config.js';
 
+// Initialize Google GenAI client instance using API key from environment configuration
 const ai = new GoogleGenAI({ apiKey: ENV.GEMINI_API_KEY });
 
 /**
- * Generates elite executive SRE insights and self-healing playbooks with robust fallbacks.
+ * Generates elite executive SRE insights and self-healing playbooks with robust model fallback handling[cite: 11].
  */
 export const generateAiHealthInsights = async (healthPayload) => {
+  // Construct detailed prompt for Gemini AI explaining system telemetry in friendly, non-technical terms[cite: 11]
   const prompt = `
     You are a friendly, expert System Reliability Guide for Brightline HR Enterprise Platform. 
     Your job is to explain system health telemetry to non-technical users and team operators in a very simple, clear, human, and conversational tone (avoid overly dense technical jargon where possible, or explain it simply).
@@ -35,7 +37,7 @@ export const generateAiHealthInsights = async (healthPayload) => {
     ${JSON.stringify(healthPayload, null, 2)}
   `;
 
-  // Updated fallback chain with recommended 3.5-flash-lite first
+  // Updated fallback chain with recommended 3.5-flash-lite first[cite: 11]
   const modelsToTry = [
     'gemini-3.5-flash-lite',
     'gemini-3.8-flash',
@@ -44,6 +46,7 @@ export const generateAiHealthInsights = async (healthPayload) => {
 
   let lastError = null;
 
+  // Loop through model fallback chain to ensure high availability during AI generation[cite: 11]
   for (const modelName of modelsToTry) {
     try {
       console.log(`Attempting SRE insight generation using model: ${modelName}`);
@@ -52,6 +55,7 @@ export const generateAiHealthInsights = async (healthPayload) => {
         contents: prompt,
       });
 
+      // Return generated model name and text response if successful[cite: 11]
       if (response && (response.text || response.candidates?.[0])) {
         return {
           modelUsed: modelName,
@@ -64,5 +68,6 @@ export const generateAiHealthInsights = async (healthPayload) => {
     }
   }
 
+  // Throw error if all models in the fallback chain fail[cite: 11]
   throw new Error(`All Gemini fallback models failed: ${lastError?.message || 'Unknown error'}`);
 };

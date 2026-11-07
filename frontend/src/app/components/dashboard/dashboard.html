@@ -1,10 +1,70 @@
 <main class="dashboard-container" role="main" aria-label="Brightline HR Integration Dashboard">
   
-  <header class="dashboard-header">
-    <h1 tabindex="0">Brightline HR - Enterprise Integration Dashboard</h1>
-    <p class="subtitle">Real-time SRE telemetry monitoring and AI-driven self-healing playbooks.</p>
+  <!-- COMPACT EXECUTIVE HEADER BAR: Top navigation bar displaying platform title, status badge, auto-refresh selector, and manual refresh button -->
+  <header class="dashboard-header-bar">
+    <div class="title-group">
+      <h1>Brightline HR - Enterprise Integration Dashboard</h1>
+      <p>Real-time SRE telemetry monitoring and AI-driven self-healing playbooks.</p>
+    </div>
+
+    <!-- Header controls group container for system health status and polling configurations -->
+    <div class="header-controls-group">
+      
+      <!-- Compact Health Badge: Dynamically applies color styles based on system health or displays error fallback -->
+      <div class="compact-health-badge">
+        <span class="health-label">Health:</span>
+        <!-- Render current health status badge if there are no connection errors -->
+        <div *ngIf="!errorMessage; else errorStatusTemplate">
+          <span class="status-badge-inline" [ngClass]="systemStatus.toLowerCase()">
+            {{ systemStatus }}
+          </span>
+        </div>
+        <!-- Fallback template displaying red error status badge when backend fails -->
+        <ng-template #errorStatusTemplate>
+          <span class="status-badge-inline error">ERROR</span>
+        </ng-template>
+      </div>
+
+      <!-- Auto-Refresh Interval Selector: Allows users to set background polling intervals (10s, 30s, 60s, or off) -->
+      <div class="refresh-control-group">
+        <label for="refreshInterval">Auto-Refresh:</label>
+        <select 
+          id="refreshInterval" 
+          [(ngModel)]="selectedInterval" 
+          (ngModelChange)="onIntervalChange($event)"
+          class="refresh-select">
+          <option [value]="0">Off (Manual)</option>
+          <option [value]="10">Every 10s</option>
+          <option [value]="30">Every 30s</option>
+          <option [value]="60">Every 60s</option>
+        </select>
+      </div>
+
+      <!-- Manual Refresh Button: Triggers immediate on-demand fetching of system telemetry metrics -->
+      <button 
+        (click)="fetchTelemetryData()" 
+        class="manual-refresh-btn"
+        title="Refresh Telemetry Data Now">
+        <i class="fa-solid fa-rotate"></i> Refresh
+      </button>
+    </div>
   </header>
 
+  <!-- Success Toast Banner: Green temporary banner notifying successful API data fetching or playbook generation -->
+  <div *ngIf="successNotification" class="success-toast-banner" role="status" aria-live="polite">
+    <i class="fa-solid fa-circle-check"></i> {{ successNotification }}
+  </div>
+
+  <!-- Error Alert Widget: Prominent warning banner displayed when backend API connectivity drops -->
+  <div *ngIf="errorMessage" class="status-error-widget" role="alert" aria-live="assertive">
+    <div class="error-badge-flex">
+      <span class="status-pill red">ERROR</span>
+      <span class="error-title">Backend Connection Failed</span>
+    </div>
+    <p class="error-desc">{{ errorMessage }}</p>
+  </div>
+
+  <!-- Initial Loading Wave Spinner: Displayed while the primary health telemetry request is pending -->
   <div *ngIf="isLoadingHealth" class="loader-container" aria-label="Loading dashboard metrics">
     <div class="wave-spinner">
       <span></span><span></span><span></span><span></span><span></span>
@@ -12,33 +72,36 @@
     <p>Loading real-time system health...</p>
   </div>
 
+  <!-- Main Dashboard Content Container: Rendered only after initial health telemetry loading finishes -->
   <ng-container *ngIf="!isLoadingHealth">
     
-    <section class="status-card" aria-labelledby="status-heading">
-      <h2 id="status-heading">Overall System Health</h2>
-      
-      <div *ngIf="!errorMessage; else errorStatusTemplate" class="status-badge" [ngClass]="systemStatus.toLowerCase()" role="status" aria-live="polite">
-        Status: <strong>{{ systemStatus }}</strong>
-      </div>
-
-      <ng-template #errorStatusTemplate>
-        <div class="status-error-widget" role="alert" aria-live="assertive">
-          <div class="error-badge-flex">
-            <span class="status-pill red">ERROR</span>
-            <span class="error-title">Backend Connection Failed</span>
-          </div>
-          <p class="error-desc">{{ errorMessage }}</p>
-        </div>
-      </ng-template>
-    </section>
-
-    <!-- Integrations Telemetry Table Section -->
+    <!-- TELEMETRY TABLE SECTION: Lists monitored integration endpoints with search, filters, sorting, and log drawers -->
     <section class="table-section" aria-labelledby="table-heading">
       <div class="table-header-flex">
         <h2 id="table-heading">Integration Endpoints Telemetry</h2>
+
+        <!-- Right-aligned AI analysis trigger button -->
+        <div class="ai-btn-group">
+          <button 
+            class="ai-trigger-btn" 
+            (click)="fetchAiInsights()" 
+            [disabled]="isLoadingAi || integrations.length === 0 || errorMessage"
+            aria-label="Generate AI Health Insights and Playbook">
+            <!-- Normal button state -->
+            <span *ngIf="!isLoadingAi"><i class="fa-solid fa-wand-magic-sparkles"></i> Run AI Analysis</span>
+            <!-- Loading state with mini animated wave spinner during AI analysis -->
+            <span *ngIf="isLoadingAi" class="btn-spinner-flex">
+              <span class="mini-wave"><span></span><span></span><span></span></span>
+              Analyzing...
+            </span>
+          </button>
+        </div>
       </div>
 
+      <!-- FILTER TOOLBAR: Input fields for searching integration IDs, filtering statuses, min requests, error rates, and max latency -->
       <div class="inner-filter-toolbar" aria-label="Telemetry Filters">
+        
+        <!-- Search filter by Integration ID -->
         <div class="filter-group">
           <label for="search-integration">Integration ID:</label>
           <input 
@@ -49,6 +112,7 @@
             class="filter-input" />
         </div>
 
+        <!-- Dropdown filter by health status -->
         <div class="filter-group">
           <label for="status-filter">Status:</label>
           <select id="status-filter" [(ngModel)]="selectedStatus" class="filter-select">
@@ -59,55 +123,107 @@
           </select>
         </div>
 
+        <!-- Minimum request volume threshold filter -->
         <div class="filter-group">
           <label for="min-requests">Min Requests:</label>
           <input id="min-requests" type="number" [(ngModel)]="minRequests" placeholder="e.g. 10" class="filter-input" />
         </div>
 
+        <!-- Minimum error rate percentage filter -->
         <div class="filter-group">
           <label for="min-error">Min Error Rate (%):</label>
           <input id="min-error" type="number" step="0.1" [(ngModel)]="minErrorRate" placeholder="e.g. 5.0" class="filter-input" />
         </div>
 
+        <!-- Maximum P95 latency threshold filter -->
         <div class="filter-group">
           <label for="max-latency">Max P95 Latency (ms):</label>
           <input id="max-latency" type="number" [(ngModel)]="maxLatency" placeholder="e.g. 800" class="filter-input" />
         </div>
 
+        <!-- Action button to clear all search and filter criteria -->
         <div class="filter-actions">
           <button class="reset-filter-btn" (click)="resetFilters()">Reset</button>
         </div>
       </div>
       
-      <!-- Main Telemetry Table with Sorting Headers -->
+      <!-- MAIN TELEMETRY DATA TABLE: Interactive table supporting column sorting via Font Awesome icons -->
       <table class="telemetry-table" aria-describedby="table-heading">
         <thead>
           <tr>
+            <!-- Sortable Integration ID column header -->
             <th scope="col" (click)="sortMainTable('integrationId')" class="sortable-th">
-              Integration ID <span class="sort-icon">{{ mainSortColumn === 'integrationId' ? (mainSortDirection === 'asc' ? '▲' : '▼') : '↕' }}</span>
+              Integration ID 
+              <span class="sort-icon">
+                <i class="fa-solid" [ngClass]="{
+                  'fa-sort-up': mainSortColumn === 'integrationId' && mainSortDirection === 'asc',
+                  'fa-sort-down': mainSortColumn === 'integrationId' && mainSortDirection === 'desc',
+                  'fa-sort': mainSortColumn !== 'integrationId'
+                }"></i>
+              </span>
             </th>
+            
+            <!-- Sortable Total Requests column header -->
             <th scope="col" (click)="sortMainTable('totalRequests')" class="sortable-th">
-              Total Requests <span class="sort-icon">{{ mainSortColumn === 'totalRequests' ? (mainSortDirection === 'asc' ? '▲' : '▼') : '↕' }}</span>
+              Total Requests 
+              <span class="sort-icon">
+                <i class="fa-solid" [ngClass]="{
+                  'fa-sort-up': mainSortColumn === 'totalRequests' && mainSortDirection === 'asc',
+                  'fa-sort-down': mainSortColumn === 'totalRequests' && mainSortDirection === 'desc',
+                  'fa-sort': mainSortColumn !== 'totalRequests'
+                }"></i>
+              </span>
             </th>
+            
+            <!-- Sortable Error Rate column header -->
             <th scope="col" (click)="sortMainTable('errorRate')" class="sortable-th">
-              Error Rate (%) <span class="sort-icon">{{ mainSortColumn === 'errorRate' ? (mainSortDirection === 'asc' ? '▲' : '▼') : '↕' }}</span>
+              Error Rate (%) 
+              <span class="sort-icon">
+                <i class="fa-solid" [ngClass]="{
+                  'fa-sort-up': mainSortColumn === 'errorRate' && mainSortDirection === 'asc',
+                  'fa-sort-down': mainSortColumn === 'errorRate' && mainSortDirection === 'desc',
+                  'fa-sort': mainSortColumn !== 'errorRate'
+                }"></i>
+              </span>
             </th>
+            
+            <!-- Sortable P95 Latency column header -->
             <th scope="col" (click)="sortMainTable('p95LatencyMs')" class="sortable-th">
-              P95 Latency (ms) <span class="sort-icon">{{ mainSortColumn === 'p95LatencyMs' ? (mainSortDirection === 'asc' ? '▲' : '▼') : '↕' }}</span>
+              P95 Latency (ms) 
+              <span class="sort-icon">
+                <i class="fa-solid" [ngClass]="{
+                  'fa-sort-up': mainSortColumn === 'p95LatencyMs' && mainSortDirection === 'asc',
+                  'fa-sort-down': mainSortColumn === 'p95LatencyMs' && mainSortDirection === 'desc',
+                  'fa-sort': mainSortColumn !== 'p95LatencyMs'
+                }"></i>
+              </span>
             </th>
+            
+            <!-- Sortable Status column header -->
             <th scope="col" (click)="sortMainTable('status')" class="sortable-th">
-              Status <span class="sort-icon">{{ mainSortColumn === 'status' ? (mainSortDirection === 'asc' ? '▲' : '▼') : '↕' }}</span>
+              Status 
+              <span class="sort-icon">
+                <i class="fa-solid" [ngClass]="{
+                  'fa-sort-up': mainSortColumn === 'status' && mainSortDirection === 'asc',
+                  'fa-sort-down': mainSortColumn === 'status' && mainSortDirection === 'desc',
+                  'fa-sort': mainSortColumn !== 'status'
+                }"></i>
+              </span>
             </th>
+            
+            <!-- Expand drawer button column header -->
             <th scope="col" style="text-align: center; width: 90px;">Details</th>
           </tr>
         </thead>
         <tbody>
+          <!-- Loop through filtered and sorted integration records -->
           <ng-container *ngFor="let item of filteredIntegrations">
             <tr [class.expanded-parent]="isRowExpanded(item.integrationId)">
               <td><strong>{{ item.integrationId }}</strong></td>
               <td>{{ item.totalRequests }}</td>
               <td>{{ item.errorRate }}%</td>
               <td>{{ item.p95LatencyMs }} ms</td>
+              <!-- Dynamic status pill rendering colored badges for Healthy (green), Degraded (orange), and Unhealthy (red) -->
               <td>
                 <span class="status-pill" [ngClass]="{
                   'green': item.status === 'HEALTHY' || item.status === 'STABLE',
@@ -117,45 +233,89 @@
                   {{ item.status }}
                 </span>
               </td>
+              <!-- Action button to expand or collapse inner request log history -->
               <td style="text-align: center;">
                 <button class="icon-toggle-btn" (click)="toggleRow(item.integrationId)" [attr.aria-label]="'Toggle details for ' + item.integrationId">
-                  <span *ngIf="!isRowExpanded(item.integrationId)">▼ View</span>
-                  <span *ngIf="isRowExpanded(item.integrationId)">▲ Hide</span>
+                  <span *ngIf="!isRowExpanded(item.integrationId)"><i class="fa-solid fa-chevron-down"></i> View</span>
+                  <span *ngIf="isRowExpanded(item.integrationId)"><i class="fa-solid fa-chevron-up"></i> Hide</span>
                 </button>
               </td>
             </tr>
 
-            <!-- Nested Accordion Log Table with Inner Sorting -->
+            <!-- INNER LOG DRAWER ROW: Expandable detailed request history logs for a specific integration endpoint -->
             <tr *ngIf="isRowExpanded(item.integrationId)" class="nested-log-row">
               <td colspan="6" class="nested-log-container">
                 <div class="inner-log-box">
                   <h4>Request Log History ({{ item.rawLogs?.length || 0 }} total entries)</h4>
                   
+                  <!-- Nested sorting and paginated log entry table -->
                   <table class="inner-log-table">
                     <thead>
                       <tr>
+                        <!-- Timestamp sorting header -->
                         <th (click)="sortInnerTable(item.integrationId, 'timestamp')" class="sortable-th">
-                          Timestamp <span class="sort-icon">{{ innerSortColumns[item.integrationId] === 'timestamp' ? (innerSortDirections[item.integrationId] === 'asc' ? '▲' : '▼') : '↕' }}</span>
+                          Timestamp 
+                          <span class="sort-icon">
+                            <i class="fa-solid" [ngClass]="{
+                              'fa-sort-up': innerSortColumns[item.integrationId] === 'timestamp' && innerSortDirections[item.integrationId] === 'asc',
+                              'fa-sort-down': innerSortColumns[item.integrationId] === 'timestamp' && innerSortDirections[item.integrationId] === 'desc',
+                              'fa-sort': innerSortColumns[item.integrationId] !== 'timestamp'
+                            }"></i>
+                          </span>
                         </th>
+                        <!-- Endpoint path sorting header -->
                         <th (click)="sortInnerTable(item.integrationId, 'endpoint')" class="sortable-th">
-                          Endpoint <span class="sort-icon">{{ innerSortColumns[item.integrationId] === 'endpoint' ? (innerSortDirections[item.integrationId] === 'asc' ? '▲' : '▼') : '↕' }}</span>
+                          Endpoint 
+                          <span class="sort-icon">
+                            <i class="fa-solid" [ngClass]="{
+                              'fa-sort-up': innerSortColumns[item.integrationId] === 'endpoint' && innerSortDirections[item.integrationId] === 'asc',
+                              'fa-sort-down': innerSortColumns[item.integrationId] === 'endpoint' && innerSortDirections[item.integrationId] === 'desc',
+                              'fa-sort': innerSortColumns[item.integrationId] !== 'endpoint'
+                            }"></i>
+                          </span>
                         </th>
+                        <!-- HTTP status code sorting header -->
                         <th (click)="sortInnerTable(item.integrationId, 'status_code')" class="sortable-th">
-                          Status Code <span class="sort-icon">{{ innerSortColumns[item.integrationId] === 'status_code' ? (innerSortDirections[item.integrationId] === 'asc' ? '▲' : '▼') : '↕' }}</span>
+                          Status Code 
+                          <span class="sort-icon">
+                            <i class="fa-solid" [ngClass]="{
+                              'fa-sort-up': innerSortColumns[item.integrationId] === 'status_code' && innerSortDirections[item.integrationId] === 'asc',
+                              'fa-sort-down': innerSortColumns[item.integrationId] === 'status_code' && innerSortDirections[item.integrationId] === 'desc',
+                              'fa-sort': innerSortColumns[item.integrationId] !== 'status_code'
+                            }"></i>
+                          </span>
                         </th>
+                        <!-- Response time duration sorting header -->
                         <th (click)="sortInnerTable(item.integrationId, 'response_time_ms')" class="sortable-th">
-                          Response Time <span class="sort-icon">{{ innerSortColumns[item.integrationId] === 'response_time_ms' ? (innerSortDirections[item.integrationId] === 'asc' ? '▲' : '▼') : '↕' }}</span>
+                          Response Time 
+                          <span class="sort-icon">
+                            <i class="fa-solid" [ngClass]="{
+                              'fa-sort-up': innerSortColumns[item.integrationId] === 'response_time_ms' && innerSortDirections[item.integrationId] === 'asc',
+                              'fa-sort-down': innerSortColumns[item.integrationId] === 'response_time_ms' && innerSortDirections[item.integrationId] === 'desc',
+                              'fa-sort': innerSortColumns[item.integrationId] !== 'response_time_ms'
+                            }"></i>
+                          </span>
                         </th>
+                        <!-- Error message description sorting header -->
                         <th (click)="sortInnerTable(item.integrationId, 'error_message')" class="sortable-th">
-                          Error Message <span class="sort-icon">{{ innerSortColumns[item.integrationId] === 'error_message' ? (innerSortDirections[item.integrationId] === 'asc' ? '▲' : '▼') : '↕' }}</span>
+                          Error Message 
+                          <span class="sort-icon">
+                            <i class="fa-solid" [ngClass]="{
+                              'fa-sort-up': innerSortColumns[item.integrationId] === 'error_message' && innerSortDirections[item.integrationId] === 'asc',
+                              'fa-sort-down': innerSortColumns[item.integrationId] === 'error_message' && innerSortDirections[item.integrationId] === 'desc',
+                              'fa-sort': innerSortColumns[item.integrationId] !== 'error_message'
+                            }"></i>
+                          </span>
                         </th>
                       </tr>
                     </thead>
                     <tbody>
+                      <!-- Render individual paginated log entries -->
                       <tr *ngFor="let log of getSortedAndPaginatedLogs(item)">
                         <td>{{ log.timestamp | date:'yyyy-MM-dd HH:mm:ss' }}</td>
                         <td><code>{{ log.endpoint }}</code></td>
                         <td>
+                          <!-- Color code status codes: Red for >=400 errors, Green for 200 successes -->
                           <span [class.text-danger]="log.status_code >= 400" [class.text-success]="log.status_code < 400">
                             {{ log.status_code || 'TIMEOUT' }}
                           </span>
@@ -163,71 +323,126 @@
                         <td>{{ log.response_time_ms }} ms</td>
                         <td class="error-col">{{ log.error_message || '-' }}</td>
                       </tr>
+                      <!-- Fallback row displayed when an endpoint has zero logged requests -->
                       <tr *ngIf="!item.rawLogs || item.rawLogs.length === 0">
                         <td colspan="5" class="empty-logs">No detailed logs recorded for this endpoint.</td>
                       </tr>
                     </tbody>
                   </table>
 
+                  <!-- INNER LOG PAGINATION CONTROLS: Next/Prev navigation buttons for cycling log pages -->
                   <div class="pagination-bar" *ngIf="item.rawLogs && item.rawLogs.length > pageSize">
                     <button [disabled]="logPages[item.integrationId] === 1" (click)="changePage(item.integrationId, logPages[item.integrationId] - 1)">
-                      ◀ Prev
+                      <i class="fa-solid fa-chevron-left"></i> Prev
                     </button>
                     <span>Page {{ logPages[item.integrationId] }} of {{ getTotalPages(item) }}</span>
                     <button [disabled]="logPages[item.integrationId] === getTotalPages(item)" (click)="changePage(item.integrationId, logPages[item.integrationId] + 1)">
-                      Next ▶
+                      Next <i class="fa-solid fa-chevron-right"></i>
                     </button>
                   </div>
                 </div>
               </td>
             </tr>
           </ng-container>
+
+          <!-- Empty table state displayed when search filters return zero matches -->
           <tr *ngIf="filteredIntegrations.length === 0">
-            <td colspan="6" class="empty-logs" style="padding: 24px;">No integrations match your search and metric filters.</td>
+            <td colspan="6" class="empty-logs" style="padding: 16px;">No integrations match your search and metric filters.</td>
           </tr>
         </tbody>
       </table>
     </section>
 
-  </ng-container>
-
-  <!-- AI SRE Insights Section -->
-  <section class="ai-section" aria-labelledby="ai-heading">
-    <div class="ai-header-flex">
-      <h2 id="ai-heading">Gemini AI SRE Executive Playbook</h2>
-      <button 
-        class="ai-trigger-btn" 
-        (click)="fetchAiInsights()" 
-        [disabled]="isLoadingAi"
-        aria-label="Generate AI Health Insights and Playbook">
-        <span *ngIf="!isLoadingAi">Generate AI Insights</span>
-        <span *ngIf="isLoadingAi" class="btn-spinner-flex">
-          <span class="mini-wave"><span></span><span></span><span></span></span>
-          Analyzing Telemetry...
-        </span>
-      </button>
-    </div>
-
-    <div *ngIf="aiInsights; else aiStateChecker" class="ai-response-box" role="region" aria-live="polite" tabindex="0">
-      <div class="model-meta" aria-label="Model used for generation">Powered by Model: <strong>{{ aiModelUsed }}</strong></div>
-      <div class="insights-content formatted-ai-text" [innerHTML]="aiInsights"></div>
-    </div>
-
-    <ng-template #aiStateChecker>
-      <div *ngIf="aiErrorMessage; else emptyAiState" class="ai-error-box" role="alert" aria-live="assertive">
-        <div class="ai-error-icon">⚠️</div>
-        <p class="ai-error-title">AI Generation Unavailable</p>
-        <span class="ai-error-subtext">{{ aiErrorMessage }}</span>
+    <!-- GEMINI AI SRE EXECUTIVE PLAYBOOK SECTION: Displays generated AI recommendations, model meta info, and export tools -->
+    <section class="ai-section" *ngIf="aiInsights || isLoadingAi || aiErrorMessage" aria-labelledby="ai-heading">
+      <div class="ai-header-flex-right">
+        <h2 id="ai-heading">Gemini AI SRE Executive Playbook</h2>
       </div>
 
-      <ng-template #emptyAiState>
-        <div class="ai-empty-state">
-          <div class="empty-icon">✨</div>
-          <p>No AI diagnostic playbook generated yet.</p>
-          <span class="empty-subtext">Click the <strong>"Generate AI Insights"</strong> button above to run an executive SRE analysis using Gemini AI.</span>
+      <!-- Rendered AI Playbook Content Box -->
+      <div *ngIf="aiInsights; else aiStateChecker" class="ai-response-box" role="region" aria-live="polite" tabindex="0">
+        
+        <!-- Meta toolbar with AI Model name on left and PDF/Email Export buttons aligned right -->
+        <div class="ai-meta-flex">
+          <div class="model-meta" aria-label="Model used for generation">
+            Powered by Model: <strong>{{ aiModelUsed }}</strong>
+          </div>
+
+          <!-- Report Export Buttons -->
+          <div class="ai-btn-group">
+            <!-- Download PDF Report button -->
+            <button 
+              class="export-pdf-btn" 
+              (click)="downloadPdfReport()" 
+              aria-label="Export Telemetry and AI Playbook as PDF Document">
+              <i class="fa-solid fa-file-pdf"></i> PDF Report
+            </button>
+
+            <!-- Open Email Modal button -->
+            <button 
+              class="export-email-btn" 
+              (click)="openEmailModal()" 
+              aria-label="Email Executive Report">
+              <i class="fa-solid fa-envelope"></i> Email Report
+            </button>
+          </div>
+        </div>
+
+        <!-- Formatted HTML AI insights content -->
+        <div class="insights-content formatted-ai-text" [innerHTML]="aiInsights"></div>
+      </div>
+
+      <!-- Fallback templates for AI loading animation and connection error cards -->
+      <ng-template #aiStateChecker>
+        <!-- AI Loading Wave Spinner -->
+        <div *ngIf="isLoadingAi" class="loader-container" style="padding: 20px; margin: 0;">
+          <div class="wave-spinner">
+            <span></span><span></span><span></span><span></span><span></span>
+          </div>
+          <p>Gemini AI is analyzing telemetry & generating self-healing playbook...</p>
+        </div>
+
+        <!-- AI Connection Error Card -->
+        <div *ngIf="aiErrorMessage" class="ai-error-box" role="alert" aria-live="assertive">
+          <div class="ai-error-icon">⚠️</div>
+          <p class="ai-error-title">AI Generation Unavailable</p>
+          <span class="ai-error-subtext">{{ aiErrorMessage }}</span>
         </div>
       </ng-template>
-    </ng-template>
-  </section>
+    </section>
+
+  </ng-container>
 
 </main>
+
+<!-- EXECUTIVE EMAIL DISPATCH MODAL POPUP: Modal form for entering recipient email address and sending reports -->
+<div class="modal-backdrop" *ngIf="showEmailModal" (click)="closeEmailModal()">
+  <div class="modal-content" (click)="$event.stopPropagation()">
+    <h3>Send Executive SRE Report</h3>
+    <p>Enter recipient email address to dispatch the telemetry summary and Gemini AI playbook.</p>
+    
+    <!-- Recipient email address input field -->
+    <div class="modal-form-group">
+      <label for="recipient-email">Recipient Email Address:</label>
+      <input 
+        id="recipient-email" 
+        type="email" 
+        [(ngModel)]="recipientEmail" 
+        placeholder="manager@brightlinehr.com" 
+        class="modal-input" />
+    </div>
+
+    <!-- Modal internal feedback messages for success or failure -->
+    <div *ngIf="emailSuccessMsg" class="modal-success-msg">{{ emailSuccessMsg }}</div>
+    <div *ngIf="emailErrorMsg" class="modal-error-msg">{{ emailErrorMsg }}</div>
+
+    <!-- Modal Action Buttons (Cancel & Send) -->
+    <div class="modal-actions">
+      <button class="modal-cancel-btn" (click)="closeEmailModal()" [disabled]="isSendingEmail">Cancel</button>
+      <button class="modal-send-btn" (click)="sendReportByEmail()" [disabled]="isSendingEmail || !recipientEmail">
+        <span *ngIf="!isSendingEmail"><i class="fa-solid fa-paper-plane"></i> Send Report</span>
+        <span *ngIf="isSendingEmail">Sending...</span>
+      </button>
+    </div>
+  </div>
+</div>

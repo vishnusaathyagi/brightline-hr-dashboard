@@ -3,7 +3,7 @@
  */
 import { generateAiHealthInsights } from '../services/ai.service.js';
 
-// Fallback health data generator if database/engine fails
+// Fallback health data generator function to supply mock telemetry if database or engine fails
 const getFallbackHealthData = () => ({
   systemStatus: 'DEGRADED',
   timestamp: new Date().toISOString(),
@@ -15,7 +15,7 @@ const getFallbackHealthData = () => ({
 });
 
 /**
- * Handles GET /api/health request to fetch integration health metrics safely.
+ * Handles GET /api/health request to fetch integration health metrics safely with graceful fallback.
  */
 export const getHealthStatusController = async (req, res) => {
   try {
@@ -44,7 +44,7 @@ export const getHealthStatusController = async (req, res) => {
 };
 
 /**
- * Handles POST /api/health/insights request to fetch Gemini AI playbooks.
+ * Handles POST /api/health/insights request to fetch Gemini AI executive SRE playbooks.
  */
 export const getAiInsightsController = async (req, res) => {
   try {
@@ -56,6 +56,7 @@ export const getAiInsightsController = async (req, res) => {
       healthData = getFallbackHealthData();
     }
 
+    // Generate AI health insights playbook based on current system health telemetry
     const aiResult = await generateAiHealthInsights(healthData);
     
     return res.status(200).json({
@@ -64,6 +65,7 @@ export const getAiInsightsController = async (req, res) => {
     });
   } catch (error) {
     console.error('Error generating AI insights:', error.message);
+    // Return graceful fallback AI response if generation fails
     return res.status(200).json({
       success: true,
       data: {

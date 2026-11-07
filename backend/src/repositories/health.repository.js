@@ -1,14 +1,14 @@
 /**
- * Repository layer to query integration request logs from PostgreSQL.
+ * Repository layer to query integration request logs from PostgreSQL database.
  */
 import { pool } from '../utils/db.js';
 import { HEALTH_CONSTANTS } from '../config/constants.js';
 
 /**
- * Fetches log aggregates for the rolling window or all seeded logs.
+ * Fetches log aggregates and performance metrics for all integration request logs.
  */
 export const getRollingWindowMetrics = async (windowMinutes = HEALTH_CONSTANTS.ROLLING_WINDOW_MINUTES) => {
-  // Query to aggregate seeded logs per integration
+  // SQL query to calculate total requests, error counts, and p95 response time latency per integration
   const query = `
     SELECT 
       integration_id,
@@ -18,6 +18,8 @@ export const getRollingWindowMetrics = async (windowMinutes = HEALTH_CONSTANTS.R
     FROM request_logs
     GROUP BY integration_id;
   `;
+  
+  // Execute database query securely and extract rows result
   const { rows } = await pool.query(query);
   return rows;
 };

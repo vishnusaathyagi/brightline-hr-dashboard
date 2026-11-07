@@ -7,7 +7,7 @@ import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { Observable, throwError } from 'rxjs';
 import { catchError } from 'rxjs/operators';
 
-// Interface definitions for strict TypeScript typing
+// Interface definitions for strict TypeScript typing of system health response data
 export interface SystemHealthResponse {
   success: boolean;
   data: {
@@ -23,6 +23,7 @@ export interface SystemHealthResponse {
   };
 }
 
+// Interface definitions for strict TypeScript typing of AI insights response data
 export interface AiInsightsResponse {
   success: boolean;
   data: {
@@ -31,6 +32,7 @@ export interface AiInsightsResponse {
   };
 }
 
+// Health service class responsible for managing all HTTP communication with the backend APIs
 @Injectable({
   providedIn: 'root' // Tells Angular to register this service as a global singleton
 })
@@ -40,7 +42,7 @@ export class HealthService {
   private baseUrl = 'http://localhost:5000/api';
 
   /**
-   * Fetches real-time system health metrics.
+   * Fetches real-time system health metrics from the backend endpoint.
    */
   getSystemHealth(): Observable<SystemHealthResponse> {
     return this.http.get<SystemHealthResponse>(`${this.baseUrl}/health`).pipe(
@@ -49,10 +51,19 @@ export class HealthService {
   }
 
   /**
-   * Triggers Gemini AI service to fetch executive SRE insights & playbooks.
+   * Triggers Gemini AI service to fetch executive SRE insights & self-healing playbooks.
    */
   getAiInsights(): Observable<AiInsightsResponse> {
     return this.http.post<AiInsightsResponse>(`${this.baseUrl}/health/insights`, {}).pipe(
+      catchError(this.handleError)
+    );
+  }
+
+  /**
+   * Sends the executive report summary and AI playbook to recipients via email API.
+   */
+  sendEmailReport(payload: any): Observable<any> {
+    return this.http.post(`${this.baseUrl}/email-report`, payload).pipe(
       catchError(this.handleError)
     );
   }
