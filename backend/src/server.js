@@ -11,9 +11,10 @@ import { seedDatabase } from './utils/seed.js';
 // Initialize Express application instance
 const app = express();
 
-// Middleware setup for handling CORS headers and incoming JSON request bodies
+// Middleware setup for handling CORS headers and incoming JSON request bodies with increased limit for large telemetry/AI payloads
 app.use(cors());
-app.use(express.json());
+app.use(express.json({ limit: '10mb' }));
+app.use(express.urlencoded({ limit: '10mb', extended: true }));
 
 // Register global request telemetry logger middleware for tracking HTTP requests
 app.use(requestLogger('HR-TELEMETRY-SVC'));
