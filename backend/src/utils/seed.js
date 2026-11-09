@@ -33,14 +33,24 @@ export const seedDatabase = async () => {
     }
 
     const rawData = fs.readFileSync(jsonFilePath, 'utf-8');
-    const logs = JSON.parse(rawData);
+    const parsedData = JSON.parse(rawData);
+
+    // Robust check for array or nested object structure
+    const logs = Array.isArray(parsedData) 
+      ? parsedData 
+      : (parsedData.logs || parsedData.data || parsedData.items || []);
+
+    if (!Array.isArray(logs) || logs.length === 0) {
+      console.error('No valid logs array found in JSON structure!');
+      return;
+    }
 
     console.log(`Found ${logs.length} logs in JSON file. Inserting into database...`);
 
-    // 3. Clear existing logs to prevent duplicates (optional)
+    // 3. Clear existing logs to prevent duplicates
     await pool.query('DELETE FROM request_logs;');
 
-    // 4. Loop and insert each log record
+    // 4. Loop and insert each log record securely
     for (const log of logs) {
       const insertQuery = `
         INSERT INTO request_logs (integration_id, endpoint, status_code, response_time_ms, error_message, timestamp)
@@ -53,7 +63,7 @@ export const seedDatabase = async () => {
         log.statusCode || log.status_code,
         log.responseTimeMs || log.response_time_ms || log.response_time,
         log.errorMessage || log.error_message || null,
-        log.timestamp || new Date()
+        log.timestamp ? new Date(log.timestamp) : new Date()
       ];
 
       await pool.query(insertQuery, values);
