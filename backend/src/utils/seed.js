@@ -9,7 +9,7 @@ const __dirname = path.dirname(__filename);
 
 export const seedDatabase = async () => {
   try {
-    // 1. Ensure request_logs table exists
+    // 1. Ensure request_logs table exists with correct schema
     const createLogTableQuery = `
       CREATE TABLE IF NOT EXISTS request_logs (
         id SERIAL PRIMARY KEY,
@@ -35,7 +35,7 @@ export const seedDatabase = async () => {
     const rawData = fs.readFileSync(jsonFilePath, 'utf-8');
     const parsedData = JSON.parse(rawData);
 
-    // Robust check for array or nested object structure
+    // Extract logs array supporting { logs: [...] } structure
     const logs = Array.isArray(parsedData) 
       ? parsedData 
       : (parsedData.logs || parsedData.data || parsedData.items || []);
@@ -50,7 +50,7 @@ export const seedDatabase = async () => {
     // 3. Clear existing logs to prevent duplicates
     await pool.query('DELETE FROM request_logs;');
 
-    // 4. Loop and insert each log record securely
+    // 4. Loop and insert each log record with accurate mapping to JSON structure
     for (const log of logs) {
       const insertQuery = `
         INSERT INTO request_logs (integration_id, endpoint, status_code, response_time_ms, error_message, timestamp)
@@ -58,11 +58,11 @@ export const seedDatabase = async () => {
       `;
       
       const values = [
-        log.integrationId || log.integration_id,
-        log.endpoint,
-        log.statusCode || log.status_code,
-        log.responseTimeMs || log.response_time_ms || log.response_time,
-        log.errorMessage || log.error_message || null,
+        log.integration || log.integration_id || log.integrationId || 'DEFAULT-SVC',
+        log.endpoint || log.path || '/api/v1/sync',
+        log.status_code !== null && log.status_code !== undefined ? log.status_code : (log.status === 'success' ? 200 : 500),
+        log.latency_ms || log.response_time_ms || log.response_time || 100,
+        log.error_message || log.errorMessage || (log.status === 'error' || log.status === 'timeout' ? `Integration status: ${log.status}` : null),
         log.timestamp ? new Date(log.timestamp) : new Date()
       ];
 
